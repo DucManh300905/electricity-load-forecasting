@@ -18,7 +18,9 @@ Tài liệu gồm 3 bảng, cùng khóa nối là `date` (`YYYY-MM-DD`):
   - Công suất (power): **MW**, là giá trị tức thời tại một thời điểm.
   - Sản lượng (energy): **triệu kWh** = GWh, là tổng của cả ngày.
 
-### Quy tắc đặt tên cột
+### Cách đọc tên cột (tóm tắt)
+
+Bảng này chỉ giúp đọc nhanh tên cột. **Ý nghĩa đầy đủ của từng cột nằm trong từ điển ở mục 2**, mỗi cột một dòng.
 
 | Thành phần | Ý nghĩa |
 |---|---|
@@ -115,19 +117,52 @@ Tổng các nguồn bằng `energy_mkwh`, sai lệch do làm tròn khoảng ±0,
 
 \* 30.8 là lỗi gõ của bài ngày 20/09/2025 (mục 3). Giá trị nhỏ nhất thật là 40.9 (01/05/2024).
 
-### 2.4. Công suất huy động tại hai thời điểm: `noon_*`, `eve_*` (MW)
+### 2.4. Công suất huy động tại hai thời điểm trong ngày (MW)
 
-Lấy từ bảng "CÔNG SUẤT HUY ĐỘNG …" trong bài. Mỗi nguồn có hai giá trị:
-- `noon_<nguồn>`: lúc **thấp điểm trưa**. Bức xạ mặt trời mạnh nên điện mặt trời phát nhiều, còn phụ tải lấy từ lưới thấp.
-- `eve_<nguồn>`: lúc **cao điểm tối**. Không có mặt trời, các nguồn khác phải bù lên.
+Lấy từ bảng "CÔNG SUẤT HUY ĐỘNG …" trong bài. Bảng cho biết **mỗi nguồn đang phát bao nhiêu MW** tại hai thời điểm:
+- **Thấp điểm trưa** (cột bắt đầu bằng `noon_`): bức xạ mặt trời mạnh nên điện mặt trời phát nhiều, còn phụ tải lấy từ lưới thấp.
+- **Cao điểm tối** (cột bắt đầu bằng `eve_`): không có mặt trời, các nguồn khác phải bù lên.
 
-`<nguồn>` dùng cùng tên với mục 2.3: `hydro`, `coal`, `gas`, `gas_gasfuel`, `gas_oilfuel`, `oil`, `wind`, `solar_farm`, `rooftop`, `rooftop_dc`, `import`, `other`. Khác với mục 2.3, bảng này **luôn tách** `solar_farm` và `rooftop`, kể cả ở thời kỳ 2023–2024. Ngoài ra còn các cột:
+Khác với mục 2.3, bảng này **luôn tách** ĐMT trang trại và mái nhà, kể cả ở thời kỳ 2023–2024. Tổng các nguồn của một thời điểm bằng cột `…_total` của thời điểm đó.
 
-| Cột | Ý nghĩa | Ví dụ (trưa / tối) |
-|---|---|---|
-| `noon_total`, `eve_total` | Tổng công suất toàn quốc, ĐMTMN theo thương phẩm (= tổng các nguồn, dùng `rooftop`) | 38818.1 / 41320.5 |
-| `noon_total_dc`, `eve_total_dc` | Tổng công suất toàn quốc, ĐMTMN theo đầu cực (từ 04/06/2024) | 40389.2 / 41320.5 |
-| `noon_label`, `eve_label` | Thời điểm lấy số liệu, chuẩn hóa từ tiêu đề cột của bảng gốc (xem bảng dưới) | thấp điểm trưa / cao điểm tối |
+| Cột | Ý nghĩa | Ví dụ 10/11/2026 | Khoảng giá trị | Số ngày có | Thời kỳ có dữ liệu |
+|---|---|---|---|---|---|
+| `noon_total` | **Tổng công suất toàn quốc**, ĐMT mái nhà theo ước tính thương phẩm (= tổng các nguồn bên dưới, dùng `rooftop`) lúc **thấp điểm trưa** | 38 818.1 | 14 384.2 → 52 681.3 | 1250 | từ 28/05/2023 |
+| `eve_total` | **Tổng công suất toàn quốc**, ĐMT mái nhà theo ước tính thương phẩm (= tổng các nguồn bên dưới, dùng `rooftop`) lúc **cao điểm tối** | 41 320.5 | 21 495.9 → 55 459.1 | 1250 | từ 28/05/2023 |
+| `noon_total_dc` | **Tổng công suất toàn quốc**, ĐMT mái nhà theo ước tính đầu cực (dùng `rooftop_dc`) lúc **thấp điểm trưa** | 40 389.2 | 17 271.7 → 53 630.9 | 888 | từ 04/06/2024 |
+| `eve_total_dc` | **Tổng công suất toàn quốc**, ĐMT mái nhà theo ước tính đầu cực (dùng `rooftop_dc`) lúc **cao điểm tối** | 41 320.5 | 21 495.9 → 55 459.1 | 888 | từ 04/06/2024 |
+| `noon_hydro` | Công suất thủy điện lúc **thấp điểm trưa** | 4 962.8 | 25.5 → 19 638 | 1250 | từ 28/05/2023 |
+| `eve_hydro` | Công suất thủy điện lúc **cao điểm tối** | 9 144.5 | 3 289.8 → 22 529 | 1250 | từ 28/05/2023 |
+| `noon_coal` | Công suất nhiệt điện than lúc **thấp điểm trưa** | 14 577.5 | 6 947.9 → 26 216 | 1250 | từ 28/05/2023 |
+| `eve_coal` | Công suất nhiệt điện than lúc **cao điểm tối** | 18 025.9 | 8 302.8 → 27 643.7 | 1250 | từ 28/05/2023 |
+| `noon_gas` | Công suất tuabin khí (chạy gas và dầu DO, gộp) lúc **thấp điểm trưa** | 4 049 | 669.0 → 4 618 | 1250 | từ 28/05/2023 |
+| `eve_gas` | Công suất tuabin khí (chạy gas và dầu DO, gộp) lúc **cao điểm tối** | 6 447 | 653.0 → 7 652 | 1250 | từ 28/05/2023 |
+| `noon_gas_gasfuel` | Công suất tuabin khí chạy gas (chỉ 2 bài đầu tiên tách riêng) lúc **thấp điểm trưa** |  | 1 786 → 2 853 | 2 | 28/05/2023 → 29/05/2023 |
+| `eve_gas_gasfuel` | Công suất tuabin khí chạy gas (chỉ 2 bài đầu tiên tách riêng) lúc **cao điểm tối** |  | 4 344 → 4 876 | 2 | 28/05/2023 → 29/05/2023 |
+| `noon_gas_oilfuel` | Công suất tuabin khí chạy dầu (chỉ 2 bài đầu tiên tách riêng) lúc **thấp điểm trưa** |  | 0.0 → 0.0 | 2 | 28/05/2023 → 29/05/2023 |
+| `eve_gas_oilfuel` | Công suất tuabin khí chạy dầu (chỉ 2 bài đầu tiên tách riêng) lúc **cao điểm tối** |  | 0.0 → 1 568 | 2 | 28/05/2023 → 29/05/2023 |
+| `noon_oil` | Công suất nhiệt điện dầu lúc **thấp điểm trưa** | 66.0 | 0.0 → 330.0 | 1232 | từ 28/05/2023 |
+| `eve_oil` | Công suất nhiệt điện dầu lúc **cao điểm tối** | 330.0 | 0.0 → 813.0 | 1232 | từ 28/05/2023 |
+| `noon_wind` | Công suất điện gió lúc **thấp điểm trưa** | 5 849.3 | 31.7 → 5 849.3 | 1250 | từ 28/05/2023 |
+| `eve_wind` | Công suất điện gió lúc **cao điểm tối** | 5 191.4 | 41.9 → 5 351.1 | 1250 | từ 28/05/2023 |
+| `noon_solar_farm` | Công suất điện mặt trời trang trại (nhà máy nối lưới) lúc **thấp điểm trưa** | 4 091.7 | 129.1 → 7 620.1 | 1250 | từ 28/05/2023 |
+| `eve_solar_farm` | Công suất điện mặt trời trang trại (nhà máy nối lưới) lúc **cao điểm tối** | 0.0 | 0.0 → 0.0 | 1228 | từ 28/05/2023 |
+| `noon_rooftop` | Công suất điện mặt trời mái nhà, ước tính thương phẩm lúc **thấp điểm trưa** | 3 302 | 377.0 → 6 543.4 | 1250 | từ 28/05/2023 |
+| `eve_rooftop` | Công suất điện mặt trời mái nhà, ước tính thương phẩm lúc **cao điểm tối** | 0.0 | 0.0 → 1.0 | 1228 | từ 28/05/2023 |
+| `noon_rooftop_dc` | Công suất điện mặt trời mái nhà, ước tính đầu cực lúc **thấp điểm trưa** | 4 873.1 | 1 095.9 → 8 567.4 | 888 | từ 04/06/2024 |
+| `eve_rooftop_dc` | Công suất điện mặt trời mái nhà, ước tính đầu cực lúc **cao điểm tối** | 0.0 | 0.0 → 0.0 | 888 | từ 04/06/2024 |
+| `noon_import` | Công suất nhập khẩu điện lúc **thấp điểm trưa** | 1 787.7 | 18.0 → 8 671.7* | 1250 | từ 28/05/2023 |
+| `eve_import` | Công suất nhập khẩu điện lúc **cao điểm tối** | 2 048.9 | 29.3 → 2 972.8 | 1250 | từ 28/05/2023 |
+| `noon_other` | Công suất nguồn khác (sinh khối, diesel…) lúc **thấp điểm trưa** | 132.0 | 36.5 → 262.8 | 1249 | từ 28/05/2023 |
+| `eve_other` | Công suất nguồn khác (sinh khối, diesel…) lúc **cao điểm tối** | 132.8 | 1.0 → 263.6 | 1248 | từ 28/05/2023 |
+| `noon_label` | **Thời điểm** lấy số liệu cho các cột `noon_*` (chuẩn hóa từ tiêu đề cột của bảng gốc). Các giá trị: xem bảng bên dưới | thấp điểm trưa | | 1250 | từ 28/05/2023 |
+| `eve_label` | **Thời điểm** lấy số liệu cho các cột `eve_*` (chuẩn hóa từ tiêu đề cột của bảng gốc). Các giá trị: xem bảng bên dưới | cao điểm tối | | 1250 | từ 28/05/2023 |
+
+\* 8 671.7 (29/07/2025) nghi là lỗi gõ trong bài gốc (mục 3.3c). Các ngày khác không vượt quá khoảng 3 000.
+
+"Số ngày có" nhỏ hơn 1 250 ở một số cột (`noon/eve_oil`, `eve_solar_farm`, `eve_rooftop`, `…_other`) vì bài không ghi dòng đó, hoặc để trống ô buổi tối của điện mặt trời.
+
+Giá trị của `noon_label` và `eve_label`:
 
 | `noon_label` | `eve_label` | Số ngày | Thời kỳ |
 |---|---|---|---|
@@ -138,7 +173,7 @@ Lấy từ bảng "CÔNG SUẤT HUY ĐỘNG …" trong bài. Mỗi nguồn có h
 | trống | trống | 4 | ngày bài không có bảng (mục 3) |
 
 **Lưu ý:**
-- Hai ngày đầu lấy số liệu tại **giờ cố định**. Từ 30/05/2023, số liệu lấy tại **thời điểm thấp điểm và cao điểm thực tế** của từng ngày, nên giữa hai thời kỳ này số liệu không hoàn toàn so sánh được. Việc đổi chữ "chiều-tối" thành "tối" (03/03/2024) có thể chỉ là đổi cách viết. Mình chưa có thông tin xác nhận.
+- Hai ngày đầu lấy số liệu tại **giờ cố định**. Từ 30/05/2023, số liệu lấy tại **thời điểm thấp điểm và cao điểm thực tế** của từng ngày, nên giữa hai thời kỳ này số liệu không hoàn toàn so sánh được. Việc đổi chữ "chiều-tối" thành "tối" (03/03/2024) có thể chỉ là đổi cách viết, chưa có thông tin xác nhận.
 - `eve_solar_farm`, `eve_rooftop`, `eve_rooftop_dc` bằng **0** vì buổi tối không có mặt trời (duy nhất ngày 02/06/2023 có `eve_rooftop` = 1). Hai cột tổng `eve_total` và `eve_total_dc` do đó luôn bằng nhau. Khi làm mô hình có thể bỏ các cột này.
 - Bảng **không ghi giờ cụ thể** của thời điểm thấp điểm và cao điểm. "Cao điểm tối" khác với thời điểm Pmax: Pmax thường xảy ra 14–16h hoặc khoảng 18h, nên `eve_total` thường nhỏ hơn `pmax_mw` (99,7% số ngày năm 2026).
 
@@ -201,6 +236,15 @@ Các ô thiếu để trống (NaN), không tự điền.
 
 > **Quy tắc:** ngày nào `|qc_energy_diff| > 2` thì xem lại trước khi dùng cột `e_*`. Biến mục tiêu `pmax_mw` và `energy_mkwh` của các ngày này vẫn bình thường so với các ngày lân cận.
 
+**c) Bảng công suất (`noon_*`, `eve_*`): phát hiện khi lập từ điển cột, chưa có cờ tự động**
+
+| Ngày | Cột | Nhận định |
+|---|---|---|
+| **29/07/2025** | `noon_import` = **8 671.7** MW | Các ngày lân cận chỉ 780–1 730 MW. Sản lượng nhập khẩu cả ngày 40,6 triệu kWh tương đương trung bình khoảng 1 700 MW. Nghi là lỗi gõ (có thể là 1 671,7). Tổng các nguồn vẫn khớp `noon_total` (45 511), nên có thể `noon_total` cũng được tính từ con số sai. |
+| 16/01/2024, 02/02/2024, 28/05/2023 | `eve_*` | Tổng các nguồn buổi tối nhỏ hơn `eve_total` lần lượt 199, 161 và 10 MW. Các ngày khác khớp trong khoảng ±5 MW. |
+
+> **Quy tắc:** các cột `noon_*`, `eve_*` không phải biến mục tiêu. Nếu dùng làm đặc trưng thì bỏ giá trị `noon_import` ngày 29/07/2025.
+
 ### 3.4. Các trường hợp khác
 
 | Vấn đề | Ngày | Ghi chú |
@@ -226,7 +270,7 @@ Danh sách bài parse thiếu trường hoặc trùng ngày được ghi vào `d
 
 - **Nguồn:** [Open-Meteo](https://open-meteo.com/), miễn phí, giấy phép CC BY 4.0. Múi giờ `Asia/Ho_Chi_Minh`, nên mỗi "ngày" tính từ 00:00 đến 23:59 giờ Việt Nam.
 - **Phạm vi:** 28/05/2023 → 10/11/2026, 1 263 ngày, 64 cột. Gồm cả 9 ngày EVN không có bài.
-- **Tên cột:** `<loại>_<biến>_<địa điểm>`, ví dụ `fc_tmax_hn` là nhiệt độ cao nhất *dự báo* tại Hà Nội.
+- **Tên cột** ghép từ 3 phần `<loại>_<biến>_<địa điểm>`, ví dụ `fc_tmax_hn` là nhiệt độ cao nhất *dự báo* tại Hà Nội. Ý nghĩa của **từng cột** liệt kê đầy đủ ở mục 5.3.
 
 ### 5.1. Loại số liệu: `obs_` và `fc_`
 
@@ -246,20 +290,7 @@ Danh sách bài parse thiếu trường hoặc trùng ngày được ghi vào `d
 
 Ngày nào bản dự báo có dưới 20/24 giờ dữ liệu thì để trống (`MIN_HOURS` trong `weather.py`), vì tính max, min hay tổng từ vài giờ sẽ cho kết quả sai. Các cột `obs_` không thiếu ngày nào.
 
-### 5.2. Biến
-
-| `<biến>` | Ý nghĩa | Đơn vị |
-|---|---|---|
-| `tmax` | Nhiệt độ cao nhất trong ngày (2 m) | °C |
-| `tmin` | Nhiệt độ thấp nhất trong ngày | °C |
-| `tmean` | Nhiệt độ trung bình ngày | °C |
-| `app_tmax` | Nhiệt độ cảm nhận cao nhất (gộp ảnh hưởng của độ ẩm và gió) | °C |
-| `rh` | Độ ẩm tương đối trung bình | % |
-| `rad` | Tổng bức xạ mặt trời trong ngày (ảnh hưởng đến điện mặt trời) | MJ/m² |
-| `cloud` | Lượng mây trung bình | % |
-| `precip` | Tổng lượng mưa | mm |
-
-### 5.3. Địa điểm
+### 5.2. Địa điểm
 
 | `<địa điểm>` | Nơi | Tọa độ | Trọng số |
 |---|---|---|---|
@@ -271,6 +302,117 @@ Ngày nào bản dự báo có dưới 20/24 giờ dữ liệu thì để trốn
 > **Giả định:** trọng số 0,45 / 0,10 / 0,45 là ước lượng xấp xỉ tỷ trọng phụ tải từng miền, **chưa lấy từ nguồn chính thức**. Nếu có số liệu của EVN/NSMO thì sửa `REGION_WEIGHTS` trong `weather.py`. Vì các cột của từng miền vẫn được giữ, mô hình có thể tự học trọng số thay vì dùng cột `vn`.
 
 Mỗi thành phố chỉ là một điểm đại diện cho cả miền. Thời tiết các tỉnh khác trong miền có thể khác.
+
+### 5.3. Từ điển cột
+
+| Cột | Ý nghĩa | Ví dụ |
+|---|---|---|
+| `date` | Ngày (giờ Việt Nam). Khóa nối với `evn_daily.csv` và `calendar.csv` | 2026-11-10 |
+
+Mỗi biến thời tiết có 8 cột: 2 loại số liệu (thực tế `obs_`, dự báo `fc_`) × 4 địa điểm (Hà Nội, Đà Nẵng, TP.HCM, trung bình toàn quốc). Cột "Số ngày thiếu" tính trên 1 263 ngày; lý do thiếu ở mục 5.1.
+**Nhiệt độ cao nhất trong ngày (đo ở độ cao 2 m)** (°C)
+
+| Cột | Ý nghĩa | Ví dụ 10/11/2026 | Khoảng giá trị | Số ngày thiếu |
+|---|---|---|---|---|
+| `obs_tmax_hn` | Nhiệt độ cao nhất trong ngày, thực tế, tại Hà Nội | 19.8 | 11.3 → 40.2 | 0 |
+| `obs_tmax_dn` | Nhiệt độ cao nhất trong ngày, thực tế, tại Đà Nẵng | 25.3 | 19.1 → 40.3 | 0 |
+| `obs_tmax_hcm` | Nhiệt độ cao nhất trong ngày, thực tế, tại TP.HCM | 34.6 | 26.4 → 39.5 | 0 |
+| `obs_tmax_vn` | Nhiệt độ cao nhất trong ngày, thực tế, **trung bình toàn quốc** (có trọng số của 3 điểm) | 27.0 | 21.7 → 39.2 | 0 |
+| `fc_tmax_hn` | Nhiệt độ cao nhất trong ngày, **dự báo** (phát hành trước 1 ngày), tại Hà Nội | 20.7 | 9.4 → 41.4 | 21 |
+| `fc_tmax_dn` | Nhiệt độ cao nhất trong ngày, **dự báo** (phát hành trước 1 ngày), tại Đà Nẵng | 24.7 | 19.0 → 43.4 | 21 |
+| `fc_tmax_hcm` | Nhiệt độ cao nhất trong ngày, **dự báo** (phát hành trước 1 ngày), tại TP.HCM | 33.7 | 26.3 → 39.3 | 21 |
+| `fc_tmax_vn` | Nhiệt độ cao nhất trong ngày, **dự báo** (phát hành trước 1 ngày), **trung bình toàn quốc** (có trọng số của 3 điểm) | 26.9 | 20.5 → 40.1 | 21 |
+
+**Nhiệt độ thấp nhất trong ngày** (°C)
+
+| Cột | Ý nghĩa | Ví dụ 10/11/2026 | Khoảng giá trị | Số ngày thiếu |
+|---|---|---|---|---|
+| `obs_tmin_hn` | Nhiệt độ thấp nhất trong ngày, thực tế, tại Hà Nội | 15.4 | 7.1 → 29.2 | 0 |
+| `obs_tmin_dn` | Nhiệt độ thấp nhất trong ngày, thực tế, tại Đà Nẵng | 23.0 | 15.9 → 31.0 | 0 |
+| `obs_tmin_hcm` | Nhiệt độ thấp nhất trong ngày, thực tế, tại TP.HCM | 24.3 | 17.7 → 29.3 | 0 |
+| `obs_tmin_vn` | Nhiệt độ thấp nhất trong ngày, thực tế, **trung bình toàn quốc** (có trọng số của 3 điểm) | 20.2 | 13.6 → 28.1 | 0 |
+| `fc_tmin_hn` | Nhiệt độ thấp nhất trong ngày, **dự báo** (phát hành trước 1 ngày), tại Hà Nội | 16.9 | 8.0 → 30.3 | 21 |
+| `fc_tmin_dn` | Nhiệt độ thấp nhất trong ngày, **dự báo** (phát hành trước 1 ngày), tại Đà Nẵng | 23.4 | 13.1 → 31.2 | 21 |
+| `fc_tmin_hcm` | Nhiệt độ thấp nhất trong ngày, **dự báo** (phát hành trước 1 ngày), tại TP.HCM | 24.3 | 17.1 → 28.7 | 21 |
+| `fc_tmin_vn` | Nhiệt độ thấp nhất trong ngày, **dự báo** (phát hành trước 1 ngày), **trung bình toàn quốc** (có trọng số của 3 điểm) | 20.9 | 13.2 → 28.0 | 21 |
+
+**Nhiệt độ trung bình ngày** (°C)
+
+| Cột | Ý nghĩa | Ví dụ 10/11/2026 | Khoảng giá trị | Số ngày thiếu |
+|---|---|---|---|---|
+| `obs_tmean_hn` | Nhiệt độ trung bình ngày, thực tế, tại Hà Nội | 17.3 | 9.2 → 33.0 | 0 |
+| `obs_tmean_dn` | Nhiệt độ trung bình ngày, thực tế, tại Đà Nẵng | 24.4 | 18.3 → 34.3 | 0 |
+| `obs_tmean_hcm` | Nhiệt độ trung bình ngày, thực tế, tại TP.HCM | 28.3 | 23.7 → 32.5 | 0 |
+| `obs_tmean_vn` | Nhiệt độ trung bình ngày, thực tế, **trung bình toàn quốc** (có trọng số của 3 điểm) | 23.0 | 19.0 → 32.5 | 0 |
+| `fc_tmean_hn` | Nhiệt độ trung bình ngày, **dự báo** (phát hành trước 1 ngày), tại Hà Nội | 18.7 | 8.8 → 34.2 | 21 |
+| `fc_tmean_dn` | Nhiệt độ trung bình ngày, **dự báo** (phát hành trước 1 ngày), tại Đà Nẵng | 24.0 | 18.0 → 34.2 | 21 |
+| `fc_tmean_hcm` | Nhiệt độ trung bình ngày, **dự báo** (phát hành trước 1 ngày), tại TP.HCM | 27.7 | 23.2 → 32.4 | 21 |
+| `fc_tmean_vn` | Nhiệt độ trung bình ngày, **dự báo** (phát hành trước 1 ngày), **trung bình toàn quốc** (có trọng số của 3 điểm) | 23.3 | 18.5 → 32.4 | 21 |
+
+**Nhiệt độ cảm nhận cao nhất trong ngày (tính cả độ ẩm và gió)** (°C)
+
+| Cột | Ý nghĩa | Ví dụ 10/11/2026 | Khoảng giá trị | Số ngày thiếu |
+|---|---|---|---|---|
+| `obs_app_tmax_hn` | Nhiệt độ cảm nhận cao nhất trong ngày, thực tế, tại Hà Nội | 18.6 | 8.2 → 46.9 | 0 |
+| `obs_app_tmax_dn` | Nhiệt độ cảm nhận cao nhất trong ngày, thực tế, tại Đà Nẵng | 26.9 | 19.2 → 46.1 | 0 |
+| `obs_app_tmax_hcm` | Nhiệt độ cảm nhận cao nhất trong ngày, thực tế, tại TP.HCM | 39.4 | 30.2 → 44.2 | 0 |
+| `obs_app_tmax_vn` | Nhiệt độ cảm nhận cao nhất trong ngày, thực tế, **trung bình toàn quốc** (có trọng số của 3 điểm) | 28.8 | 22.5 → 45.2 | 0 |
+| `fc_app_tmax_hn` | Nhiệt độ cảm nhận cao nhất trong ngày, **dự báo** (phát hành trước 1 ngày), tại Hà Nội | 19.3 | 7.2 → 48.1 | 237 |
+| `fc_app_tmax_dn` | Nhiệt độ cảm nhận cao nhất trong ngày, **dự báo** (phát hành trước 1 ngày), tại Đà Nẵng | 26.4 | 19.3 → 49.0 | 237 |
+| `fc_app_tmax_hcm` | Nhiệt độ cảm nhận cao nhất trong ngày, **dự báo** (phát hành trước 1 ngày), tại TP.HCM | 39.6 | 27.7 → 45.1 | 237 |
+| `fc_app_tmax_vn` | Nhiệt độ cảm nhận cao nhất trong ngày, **dự báo** (phát hành trước 1 ngày), **trung bình toàn quốc** (có trọng số của 3 điểm) | 29.1 | 22.6 → 46.1 | 237 |
+
+**Độ ẩm tương đối trung bình ngày** (%)
+
+| Cột | Ý nghĩa | Ví dụ 10/11/2026 | Khoảng giá trị | Số ngày thiếu |
+|---|---|---|---|---|
+| `obs_rh_hn` | Độ ẩm tương đối trung bình ngày, thực tế, tại Hà Nội | 67.0 | 44.0 → 97.0 | 0 |
+| `obs_rh_dn` | Độ ẩm tương đối trung bình ngày, thực tế, tại Đà Nẵng | 85.0 | 48.0 → 95.0 | 0 |
+| `obs_rh_hcm` | Độ ẩm tương đối trung bình ngày, thực tế, tại TP.HCM | 75.0 | 51.0 → 93.0 | 0 |
+| `obs_rh_vn` | Độ ẩm tương đối trung bình ngày, thực tế, **trung bình toàn quốc** (có trọng số của 3 điểm) | 72.4 | 50.1 → 91.6 | 0 |
+| `fc_rh_hn` | Độ ẩm tương đối trung bình ngày, **dự báo** (phát hành trước 1 ngày), tại Hà Nội | 54.4 | 46.9 → 96.0 | 237 |
+| `fc_rh_dn` | Độ ẩm tương đối trung bình ngày, **dự báo** (phát hành trước 1 ngày), tại Đà Nẵng | 87.7 | 50.7 → 95.5 | 237 |
+| `fc_rh_hcm` | Độ ẩm tương đối trung bình ngày, **dự báo** (phát hành trước 1 ngày), tại TP.HCM | 80.6 | 51.1 → 94.1 | 237 |
+| `fc_rh_vn` | Độ ẩm tương đối trung bình ngày, **dự báo** (phát hành trước 1 ngày), **trung bình toàn quốc** (có trọng số của 3 điểm) | 69.5 | 53.5 → 90.9 | 237 |
+
+**Tổng bức xạ mặt trời trong ngày** (MJ/m²)
+
+| Cột | Ý nghĩa | Ví dụ 10/11/2026 | Khoảng giá trị | Số ngày thiếu |
+|---|---|---|---|---|
+| `obs_rad_hn` | Tổng bức xạ mặt trời trong ngày, thực tế, tại Hà Nội | 6.2 | 1.9 → 26.4 | 0 |
+| `obs_rad_dn` | Tổng bức xạ mặt trời trong ngày, thực tế, tại Đà Nẵng | 9.3 | 1.4 → 26.6 | 0 |
+| `obs_rad_hcm` | Tổng bức xạ mặt trời trong ngày, thực tế, tại TP.HCM | 18.0 | 4.5 → 26.0 | 0 |
+| `obs_rad_vn` | Tổng bức xạ mặt trời trong ngày, thực tế, **trung bình toàn quốc** (có trọng số của 3 điểm) | 11.8 | 4.3 → 24.9 | 0 |
+| `fc_rad_hn` | Tổng bức xạ mặt trời trong ngày, **dự báo** (phát hành trước 1 ngày), tại Hà Nội | 11.1 | 0.8 → 27.1 | 237 |
+| `fc_rad_dn` | Tổng bức xạ mặt trời trong ngày, **dự báo** (phát hành trước 1 ngày), tại Đà Nẵng | 5.9 | 0.6 → 27.0 | 237 |
+| `fc_rad_hcm` | Tổng bức xạ mặt trời trong ngày, **dự báo** (phát hành trước 1 ngày), tại TP.HCM | 18.6 | 3.8 → 26.0 | 237 |
+| `fc_rad_vn` | Tổng bức xạ mặt trời trong ngày, **dự báo** (phát hành trước 1 ngày), **trung bình toàn quốc** (có trọng số của 3 điểm) | 13.9 | 4.9 → 24.7 | 237 |
+
+**Lượng mây che phủ trung bình ngày** (%)
+
+| Cột | Ý nghĩa | Ví dụ 10/11/2026 | Khoảng giá trị | Số ngày thiếu |
+|---|---|---|---|---|
+| `obs_cloud_hn` | Lượng mây che phủ trung bình ngày, thực tế, tại Hà Nội | 83.0 | 0.0 → 100.0 | 0 |
+| `obs_cloud_dn` | Lượng mây che phủ trung bình ngày, thực tế, tại Đà Nẵng | 94.0 | 1.0 → 100.0 | 0 |
+| `obs_cloud_hcm` | Lượng mây che phủ trung bình ngày, thực tế, tại TP.HCM | 91.0 | 4.0 → 100.0 | 0 |
+| `obs_cloud_vn` | Lượng mây che phủ trung bình ngày, thực tế, **trung bình toàn quốc** (có trọng số của 3 điểm) | 87.7 | 6.3 → 100.0 | 0 |
+| `fc_cloud_hn` | Lượng mây che phủ trung bình ngày, **dự báo** (phát hành trước 1 ngày), tại Hà Nội | 77.8 | 0.0 → 100.0 | 237 |
+| `fc_cloud_dn` | Lượng mây che phủ trung bình ngày, **dự báo** (phát hành trước 1 ngày), tại Đà Nẵng | 99.4 | 1.5 → 100.0 | 237 |
+| `fc_cloud_hcm` | Lượng mây che phủ trung bình ngày, **dự báo** (phát hành trước 1 ngày), tại TP.HCM | 58.2 | 3.3 → 100.0 | 237 |
+| `fc_cloud_vn` | Lượng mây che phủ trung bình ngày, **dự báo** (phát hành trước 1 ngày), **trung bình toàn quốc** (có trọng số của 3 điểm) | 71.1 | 2.5 → 100.0 | 237 |
+
+**Tổng lượng mưa trong ngày** (mm)
+
+| Cột | Ý nghĩa | Ví dụ 10/11/2026 | Khoảng giá trị | Số ngày thiếu |
+|---|---|---|---|---|
+| `obs_precip_hn` | Tổng lượng mưa trong ngày, thực tế, tại Hà Nội | 0.4 | 0.0 → 133.0 | 0 |
+| `obs_precip_dn` | Tổng lượng mưa trong ngày, thực tế, tại Đà Nẵng | 91.0 | 0.0 → 173.7 | 0 |
+| `obs_precip_hcm` | Tổng lượng mưa trong ngày, thực tế, tại TP.HCM | 3.3 | 0.0 → 52.6 | 0 |
+| `obs_precip_vn` | Tổng lượng mưa trong ngày, thực tế, **trung bình toàn quốc** (có trọng số của 3 điểm) | 10.8 | 0.0 → 61.7 | 0 |
+| `fc_precip_hn` | Tổng lượng mưa trong ngày, **dự báo** (phát hành trước 1 ngày), tại Hà Nội | 0.0 | 0.0 → 147.5 | 237 |
+| `fc_precip_dn` | Tổng lượng mưa trong ngày, **dự báo** (phát hành trước 1 ngày), tại Đà Nẵng | 69.3 | 0.0 → 137.2 | 237 |
+| `fc_precip_hcm` | Tổng lượng mưa trong ngày, **dự báo** (phát hành trước 1 ngày), tại TP.HCM | 9.6 | 0.0 → 56.3 | 237 |
+| `fc_precip_vn` | Tổng lượng mưa trong ngày, **dự báo** (phát hành trước 1 ngày), **trung bình toàn quốc** (có trọng số của 3 điểm) | 11.2 | 0.0 → 71.4 | 237 |
 
 ---
 
