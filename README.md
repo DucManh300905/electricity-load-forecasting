@@ -9,7 +9,7 @@ Dự báo công suất lớn nhất (Pmax) và sản lượng điện của Hệ
 | 1 | Thu thập và chuẩn hóa dữ liệu EVN | Hoàn thành: 1 254 ngày (28/05/2023 → 10/11/2026) |
 | 2 | Dữ liệu thời tiết và lịch lễ, Tết | Hoàn thành |
 | 3 | Phân tích khám phá (EDA) | Hoàn thành: [docs/EDA.md](docs/EDA.md) |
-| 4 | Mô hình dự báo |  |
+| 4 | Mô hình dự báo | Hoàn thành: MAPE test Pmax 2,12%, sản lượng 2,10% ([docs/Model.md](docs/Model.md)) |
 | 5 | Vận hành hằng ngày và dashboard |  |
 
 Kế hoạch chi tiết: [docs/Projects.md](docs/Projects.md)
@@ -34,6 +34,7 @@ python crawler.py      # tải bản tin EVN từ 28/05/2023 đến hôm qua và
 python parser.py       # tạo data/evn_daily.csv
 python weather.py      # thời tiết thực tế + dự báo → data/weather.csv
 python calendar_features.py  # lịch lễ, Tết → data/calendar.csv
+python train.py        # huấn luyện + backtest → data/backtest*.csv, models/params.json
 ```
 
 `crawler.py` chạy tiếp được khi bị dừng giữa chừng: chạy lại thì nó chỉ tải phần còn thiếu. Tham số: `--start YYYY-MM-DD`, `--end YYYY-MM-DD`, `--scan-ids`, `--retry-not-found`.
@@ -47,6 +48,8 @@ python calendar_features.py  # lịch lễ, Tết → data/calendar.csv
 ├── parser.py           # HTML → data/evn_daily.csv
 ├── weather.py          # Open-Meteo → data/weather.csv
 ├── calendar_features.py  # lịch → data/calendar.csv
+├── features.py         # đặc trưng cho mô hình
+├── train.py            # huấn luyện, walk-forward backtest, kiểm định
 ├── requirements.txt
 ├── data/
 │   ├── evn_daily.csv       # dữ liệu EVN sạch
@@ -56,12 +59,15 @@ python calendar_features.py  # lịch lễ, Tết → data/calendar.csv
 │   ├── parse_issues.csv
 │   └── not_found_dates.txt
 ├── notebooks/
-│   └── 01_eda.ipynb        # phân tích khám phá (Giai đoạn 3)
-├── reports/figures/        # biểu đồ EDA
+│   ├── 01_eda.ipynb        # phân tích khám phá (Giai đoạn 3)
+│   └── 02_modeling.ipynb   # kết quả mô hình (Giai đoạn 4)
+├── models/params.json      # tham số và mô hình được chọn
+├── reports/figures/        # biểu đồ EDA và mô hình
 └── docs/
     ├── Projects.md         # kế hoạch dự án
     ├── Data.md             # từ điển dữ liệu
-    └── EDA.md              # báo cáo phân tích khám phá
+    ├── EDA.md              # báo cáo phân tích khám phá
+    └── Model.md            # báo cáo mô hình
 ```
 
 ## Ghi chú

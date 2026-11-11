@@ -81,16 +81,18 @@ Mã nguồn `notebooks/01_eda.ipynb`, biểu đồ `reports/figures/`, báo cáo
 - [x] Baseline (12 tháng gần nhất): MAPE Pmax 5,63%, sản lượng 6,44%. Lễ/Tết sai 24–28%.
 - [x] Sửa nhận định sai trong `Data.md`: biến lag nhỏ nhất là lag 2, không phải lag 1.
 
-### Giai đoạn 4: Mô hình
-| Bậc | Mô hình | Vai trò |
-|---|---|---|
-| Baseline | Lag 2 (số liệu mới nhất có được), TB 4 tuần cùng thứ (lag 7, 14, 21, 28) | Mốc so sánh (đã tính ở EDA câu 8) |
-| Thống kê | SARIMAX có biến nhiệt độ | Dễ giải thích |
-| Machine learning | LightGBM với các biến lag (t-1, t-7), rolling mean, thời tiết, lịch | Mô hình chính dự kiến |
+### Giai đoạn 4: Mô hình hoàn thành (11/11/2026)
+Mã nguồn `features.py`, `train.py`, `notebooks/02_modeling.ipynb`; báo cáo **`docs/Model.md`**.
 
-- Đánh giá bằng **walk-forward** (huấn luyện trên quá khứ, dự báo ngày kế tiếp, trượt dần). Không chia dữ liệu ngẫu nhiên.
-- Chỉ số: MAPE, MAE, RMSE. Báo cáo riêng cho ngày lễ và ngày nắng nóng.
-- Khoảng dự báo P10/P50/P90 bằng quantile regression.
+Quyết định đã chốt (theo khuyến nghị): (a) chỉ dùng nhiệt độ dự báo, huấn luyện từ 07/2023; (b) Tết xử lý bằng đặc trưng trong mô hình chung; (c) dự báo cả Pmax và sản lượng.
+
+- [x] Làm sạch: loại 14 ngày có cờ `qc_same_as_adjacent`.
+- [x] Dự báo **tỉ lệ so với baseline sạch** (4 tuần cùng thứ, bỏ ngày lễ/Tết) để xử lý xu hướng tăng.
+- [x] Mô hình: baseline, Ridge (thay SARIMAX của kế hoạch cũ), LightGBM, Ensemble, LightGBM quantile.
+- [x] Walk-forward, huấn luyện lại hằng tháng. Chọn tham số và mô hình cuối trên tập kiểm định (11/2024–11/2025). Test 11/2025–11/2026.
+- [x] Kết quả test: **Pmax 2,12%** (Ensemble), **sản lượng 2,10%** (Ridge), so với baseline 5,12% và 5,88%. Diebold–Mariano p < 0,001.
+- [ ] Còn mở: khoảng P10–P90 quá hẹp (độ phủ 64–66%), cần hiệu chỉnh bằng conformal prediction.
+- [ ] Còn mở: ngày nghỉ bù và lễ rơi vào cuối tuần bị dự báo thấp quá mức. Cần thêm đặc trưng, đánh giá lại trên dữ liệu mới.
 
 ### Giai đoạn 5: Vận hành hằng ngày
 - [ ] Lịch chạy khoảng 11:30 mỗi ngày: `crawler.py` → `parser.py` → cập nhật thời tiết → `predict.py`.

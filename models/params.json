@@ -1,0 +1,34 @@
+{
+  "pmax_mw": {
+    "ridge_alpha": 10,
+    "lgb": {
+      "objective": "l1",
+      "num_leaves": 15,
+      "min_child_samples": 10,
+      "n_estimators": 600
+    },
+    "valid_mape": {
+      "clean_base": 4.812170422634902,
+      "ridge": 2.341593452689457,
+      "lightgbm": 2.3721297577106717,
+      "ensemble": 2.2548671888058944
+    },
+    "final": "ensemble"
+  },
+  "energy_mkwh": {
+    "ridge_alpha": 1,
+    "lgb": {
+      "objective": "l2",
+      "num_leaves": 15,
+      "min_child_samples": 10,
+      "n_estimators": 300
+    },
+    "valid_mape": {
+      "clean_base": 5.826140937848896,
+      "ridge": 2.204958142308543,
+      "lightgbm": 2.650911187097561,
+      "ensemble": 2.3178038183663503
+    },
+    "final": "ridge"
+  }
+}
