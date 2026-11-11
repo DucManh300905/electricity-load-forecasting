@@ -1,0 +1,18 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.ipynb_checkpoints/
+
+# Logs
+*.log
+
+# Raw scraped HTML (~25 MB): regenerate with `python crawler.py` from data/links.csv
+data/raw_html/
+
+# Editor / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
