@@ -41,7 +41,7 @@ Dự báo phụ tải của Hệ thống điện Quốc gia cho **ngày hôm sau
 EVN website ──► crawler.py ──► data/raw_html/*.html ──► parser.py ──► data/evn_daily.csv
                                                                           │
 Open-Meteo ──► weather.py ──► data/weather.csv ──┐                        │
-Lịch lễ/Tết ──► calendar.py ──────────────────────┴──► features.py ◄──────┘
+Lịch lễ/Tết ──► calendar_features.py─────────────────┴──► features.py ◄──────┘
                                                           │
                                               train.py / predict.py ──► data/forecast.csv
                                                           │
@@ -57,9 +57,11 @@ Lịch lễ/Tết ──► calendar.py ─────────────�
 - [x] Chạy parser trên toàn bộ dữ liệu năm 2026: **314/314 ngày** (01/01 → 10/11/2026), không thiếu ngày nào.
 - [x] Kiểm tra chất lượng: tổng các nguồn khớp `energy_mkwh` (lệch trung bình 0,05 triệu kWh). Chỉ thiếu bảng công suất ngày 13/03 và 14/03, vì bài gốc không đăng bảng.
 
-### Giai đoạn 2: Dữ liệu bổ sung
-- [ ] `weather.py`: tải thời tiết lịch sử và dự báo, tổng hợp theo ngày (Tmax, Tmean, độ ẩm, bức xạ).
-- [ ] `calendar.py`: thứ trong tuần, ngày lễ, nghỉ bù, số ngày trước/sau Tết.
+### Giai đoạn 2: Dữ liệu bổ sung hoàn thành (11/11/2026)
+- [x] `weather.py`: thời tiết thực tế (`obs_`, Archive API) và **dự báo trước 1 ngày** (`fc_`, Previous Runs API) cho Hà Nội, Đà Nẵng, TP.HCM, kèm trung bình có trọng số toàn quốc → `data/weather.csv` (314 ngày, không thiếu).
+- [x] `calendar_features.py`: thứ, ngày lễ, nghỉ bù, làm bù, độ dài kỳ nghỉ, khoảng cách tới Tết → `data/calendar.csv` (có sẵn 60 ngày tương lai).
+- [x] Kiểm chứng: lịch nghỉ khớp với các ngày phụ tải giảm. Phát hiện thứ Bảy có phụ tải gần bằng ngày thường (xem `Data.md` mục 6.1).
+- [ ] Còn mở: trọng số miền 0,45/0,10/0,45 là giả định, cần thay bằng số liệu chính thức nếu có.
 
 ### Giai đoạn 3: Phân tích khám phá (EDA)
 - [ ] Xu hướng, mùa vụ theo tuần và theo tháng.
@@ -100,6 +102,8 @@ Lịch lễ/Tết ──► calendar.py ─────────────�
 evn_load/
 ├── crawler.py          # thu thập HTML từ EVN
 ├── parser.py           # HTML → evn_daily.csv
+├── weather.py          # Open-Meteo → weather.csv
+├── calendar_features.py  # lịch → calendar.csv
 ├── data/
 │   ├── links.csv           # danh sách bài (id, ngày, url, tiêu đề)
 │   ├── raw_html/           # HTML gốc từng bài
@@ -116,4 +120,6 @@ cd "C:\Users\ACER\Desktop\Data Science\evn_load"
 python crawler.py              # thu thập 01/01/2026 → hôm qua
 python crawler.py --scan-ids   # thêm bước dò ID cho ngày còn thiếu
 python parser.py               # tạo data/evn_daily.csv
+python weather.py              # tạo data/weather.csv
+python calendar_features.py    # tạo data/calendar.csv
 ```

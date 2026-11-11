@@ -1,6 +1,12 @@
-# Mô tả dữ liệu: `data/evn_daily.csv`
+# Mô tả dữ liệu
 
-> Cập nhật: 11/11/2026. Phạm vi: 01/01/2026 → 10/11/2026 (314 ngày, không thiếu ngày nào).
+Tài liệu gồm 3 bảng, cùng khóa nối là `date` (`YYYY-MM-DD`):
+
+| File | Nội dung | Tạo bởi | Mục |
+|---|---|---|---|
+| `data/evn_daily.csv` | Số liệu vận hành của EVN (biến mục tiêu) | `parser.py` | 1–4 |
+| `data/weather.csv` | Thời tiết thực tế và dự báo của 3 miền | `weather.py` | 5 |
+| `data/calendar.csv` | Lịch: thứ, ngày lễ, nghỉ bù, Tết | `calendar_features.py` | 6 |
 
 ## 1. Tổng quan
 
@@ -127,3 +133,86 @@ Danh sách bài parse thiếu trường hoặc trùng ngày được ghi vào `d
 | `data/raw_html/*.html` | HTML gốc từng bài. Giữ lại để parse lại khi cần, không phải crawl lại. |
 | `data/not_found_dates.txt` | Các ngày crawler không tìm thấy bài (hiện trống) |
 | `data/parse_issues.csv` | Bài parse lỗi hoặc trùng ngày |
+
+---
+
+## 5. `data/weather.csv`: thời tiết
+
+- **Nguồn:** [Open-Meteo](https://open-meteo.com/), miễn phí, giấy phép CC BY 4.0. Múi giờ `Asia/Ho_Chi_Minh`, nên mỗi "ngày" tính từ 00:00 đến 23:59 giờ Việt Nam.
+- **Phạm vi:** 01/01/2026 → 10/11/2026, 314 ngày, 64 cột, không có ô trống.
+- **Tên cột:** `<loại>_<biến>_<địa điểm>`, ví dụ `fc_tmax_hn` là nhiệt độ cao nhất *dự báo* tại Hà Nội.
+
+### 5.1. Loại số liệu: `obs_` và `fc_`
+
+| Tiền tố | Ý nghĩa | API | Dùng khi |
+|---|---|---|---|
+| `obs_` | Thời tiết **thực tế** (tái phân tích, gần với số đo) | Archive API | Phân tích (EDA), hiểu quan hệ thời tiết và phụ tải |
+| `fc_` | **Bản dự báo phát hành trước 1 ngày** (`*_previous_day1`), gộp từ dữ liệu theo giờ | Previous Runs API | **Huấn luyện và đánh giá mô hình**, vì đây là thông tin mô hình thực sự có khi dự báo ngày mai |
+
+> **Vì sao cần `fc_`:** khi dự báo phụ tải ngày mai, ta chưa biết thời tiết thật của ngày mai, chỉ có bản dự báo. Nếu đánh giá mô hình bằng `obs_`, sai số sẽ thấp hơn so với khi dùng thật. Sai số của `fc_` so với `obs_` (Tmax, năm 2026): Hà Nội 0,80°C, Đà Nẵng 0,75°C, TP.HCM 0,72°C, toàn quốc 0,50°C.
+
+### 5.2. Biến
+
+| `<biến>` | Ý nghĩa | Đơn vị |
+|---|---|---|
+| `tmax` | Nhiệt độ cao nhất trong ngày (2 m) | °C |
+| `tmin` | Nhiệt độ thấp nhất trong ngày | °C |
+| `tmean` | Nhiệt độ trung bình ngày | °C |
+| `app_tmax` | Nhiệt độ cảm nhận cao nhất (gộp ảnh hưởng của độ ẩm và gió) | °C |
+| `rh` | Độ ẩm tương đối trung bình | % |
+| `rad` | Tổng bức xạ mặt trời trong ngày (ảnh hưởng đến điện mặt trời) | MJ/m² |
+| `cloud` | Lượng mây trung bình | % |
+| `precip` | Tổng lượng mưa | mm |
+
+### 5.3. Địa điểm
+
+| `<địa điểm>` | Nơi | Tọa độ | Trọng số |
+|---|---|---|---|
+| `hn` | Hà Nội (miền Bắc) | 21.0285, 105.8542 | 0,45 |
+| `dn` | Đà Nẵng (miền Trung) | 16.0544, 108.2022 | 0,10 |
+| `hcm` | TP.HCM (miền Nam) | 10.8231, 106.6297 | 0,45 |
+| `vn` | **Trung bình có trọng số** của 3 điểm trên | | |
+
+> **Giả định:** trọng số 0,45 / 0,10 / 0,45 là ước lượng xấp xỉ tỷ trọng phụ tải từng miền, **chưa lấy từ nguồn chính thức**. Nếu có số liệu của EVN/NSMO thì sửa `REGION_WEIGHTS` trong `weather.py`. Vì các cột của từng miền vẫn được giữ, mô hình có thể tự học trọng số thay vì dùng cột `vn`.
+
+Mỗi thành phố chỉ là một điểm đại diện cho cả miền. Thời tiết các tỉnh khác trong miền có thể khác.
+
+---
+
+## 6. `data/calendar.csv`: lịch
+
+- **Nguồn:** thư viện `holidays` 0.107 (Vietnam). Lịch đã gồm ngày lễ theo Bộ luật Lao động 2019, Tết và Giỗ Tổ tính theo âm lịch, ngày nghỉ bù và ngày hoán đổi theo quyết định hằng năm của Chính phủ.
+- **Phạm vi:** 01/01/2026 → hôm nay + 60 ngày. Lịch biết trước được, nên file có sẵn cả các ngày tương lai để dùng khi dự báo.
+
+| Cột | Ý nghĩa | Ví dụ |
+|---|---|---|
+| `date` | Ngày | 2026-09-02 |
+| `dow` | Thứ trong tuần: 0 = thứ Hai … 6 = Chủ nhật | 2 |
+| `month` | Tháng (1–12) | 9 |
+| `day_of_year` | Thứ tự ngày trong năm (1–366) | 245 |
+| `week_of_year` | Tuần ISO (1–53) | 36 |
+| `is_weekend` | 1 nếu là thứ Bảy hoặc Chủ nhật | 0 |
+| `is_holiday` | 1 nếu là ngày lễ, nghỉ bù hoặc nghỉ hoán đổi chính thức | 1 |
+| `holiday_name` | Tên ngày lễ (tiếng Việt), trống nếu không phải ngày lễ | Quốc khánh |
+| `is_makeup_workday` | 1 nếu là thứ Bảy/Chủ nhật **phải đi làm bù** cho ngày nghỉ hoán đổi | 0 |
+| `is_day_off` | 1 nếu là ngày nghỉ theo luật: (cuối tuần và không làm bù) hoặc ngày lễ | 1 |
+| `off_block_len` | Độ dài chuỗi ngày nghỉ liên tiếp chứa ngày này (0 nếu là ngày làm việc). Ví dụ Tết 2026 = 9 | 5 |
+| `is_pre_day_off` | 1 nếu là ngày làm việc ngay **trước** một ngày nghỉ | 0 |
+| `is_post_day_off` | 1 nếu là ngày làm việc ngay **sau** một ngày nghỉ | 0 |
+| `tet_offset` | Số ngày so với Mùng 1 Tết gần nhất (âm = trước Tết). Ví dụ 16/02/2026 (Giao thừa) = −1 | −167 |
+
+**Các kỳ nghỉ năm 2026 trong file:** Tết Dương lịch 01/01, Tết Nguyên đán 14–22/02 (9 ngày), Giỗ Tổ 26–27/04, 30/4–1/5 (30/04–03/05), Quốc khánh 29/08–02/09 (gồm 31/08 nghỉ thay cho thứ Bảy 22/08 đi làm bù), Ngày Văn hóa Việt Nam 24/11.
+
+### 6.1. Kiểm chứng với số liệu phụ tải
+
+Đối chiếu với `energy_mkwh`, tính tỉ lệ so với trung vị các ngày làm việc cùng tuần:
+
+| Loại ngày | Tỉ lệ phụ tải |
+|---|---|
+| Thứ Hai – thứ Sáu làm việc | 0,98 – 1,01 |
+| **Thứ Bảy** | **0,97** |
+| Chủ nhật | 0,89 |
+| Ngày lễ (01/01, 30/04, 01/05, 01–02/09) | 0,73 – 0,82 |
+| Thứ Bảy làm bù 22/08 | 0,97, không khác thứ Bảy thường |
+
+> **Phát hiện:** theo luật thứ Bảy là ngày nghỉ (`is_day_off = 1`), nhưng phụ tải thứ Bảy **gần như bằng ngày làm việc**, vì phần lớn phụ tải công nghiệp vẫn chạy. Khi làm mô hình, nên dùng riêng `dow` và `is_holiday` thay vì chỉ dùng `is_day_off`.
