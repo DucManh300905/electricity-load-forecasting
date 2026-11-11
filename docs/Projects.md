@@ -50,7 +50,7 @@ Lịch lễ/Tết ──► calendar.py ─────────────�
 
 ## 4. Các giai đoạn
 
-### Giai đoạn 1: Thu thập và chuẩn hóa dữ liệu ✅ hoàn thành (11/11/2026)
+### Giai đoạn 1: Thu thập và chuẩn hóa dữ liệu hoàn thành (11/11/2026)
 - [x] Khảo sát cấu trúc trang EVN.
 - [x] `crawler.py`: lấy danh sách bài, tìm theo ngày, dò ID, tải HTML (có thể chạy tiếp khi bị dừng).
 - [x] `parser.py`: tách số liệu thành bảng, mỗi ngày một dòng.
