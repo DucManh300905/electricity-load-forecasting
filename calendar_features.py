@@ -62,7 +62,7 @@ def build(start, end):
 
 if __name__ == "__main__":
     ap = argparse.ArgumentParser()
-    ap.add_argument("--start", type=dt.date.fromisoformat, default=dt.date(2026, 1, 1))
+    ap.add_argument("--start", type=dt.date.fromisoformat, default=dt.date(2023, 5, 28))
     ap.add_argument("--end", type=dt.date.fromisoformat, default=dt.date.today() + dt.timedelta(days=60))
     args = ap.parse_args()
     DATA.mkdir(exist_ok=True)

@@ -5,7 +5,7 @@ Two versions of every variable:
     fc_*   forecast issued the day before (Previous Runs API, *_previous_day1)
                                                         -> what a real day-ahead model would have seen
 
-    python weather.py                                   # 01/01/2026 -> yesterday
+    python weather.py                                   # 28/05/2023 -> yesterday
     python weather.py --start 2025-01-01 --end 2025-12-31
 
 Output: data/weather.csv, one row per date. Columns <src>_<var>_<city>, plus <src>_<var>_vn,
@@ -47,6 +47,7 @@ DAILY_VARS = {
 # hourly variables of the Previous Runs API, aggregated to the same daily variables
 HOURLY_VARS = ["temperature_2m", "apparent_temperature", "relative_humidity_2m",
                "shortwave_radiation", "cloud_cover", "precipitation"]
+MIN_HOURS = 20  # a forecast day needs at least this many of its 24 hours
 
 
 def get_json(url, params):
@@ -87,6 +88,9 @@ def fetch_forecast(lat, lon, start, end):
         "cloud": g["cloud_cover"].mean(),
         "precip": g["precipitation"].sum(min_count=1),
     })
+    # The archive of past runs has holes (e.g. Dec 2023 - Jan 2024): a day built from a few
+    # hours would give a wrong max/min/sum, so such days are left empty.
+    df.loc[g["temperature_2m"].count() < MIN_HOURS] = float("nan")
     return df.round(2).reset_index()
 
 
@@ -107,8 +111,9 @@ def main(start, end):
     out = out.reset_index()
     out.to_csv(DATA / "weather.csv", index=False, encoding="utf-8-sig")
     print(f"{len(out)} days, {out['date'].min()} -> {out['date'].max()}, {out.shape[1] - 1} columns")
-    nulls = out.isna().sum()
-    print("columns with gaps:", nulls[nulls > 0].to_dict() or "none")
+    for src in ("obs", "fc"):
+        gaps = out.loc[out.filter(like=f"{src}_").isna().any(axis=1), "date"]
+        print(f"{src}: {len(gaps)} days with gaps" + (f" ({gaps.min()} -> {gaps.max()})" if len(gaps) else ""))
     for code in list(CITIES) + ["vn"]:
         err = (out[f"fc_tmax_{code}"] - out[f"obs_tmax_{code}"]).abs().mean()
         print(f"  MAE forecast vs observed Tmax [{code}]: {err:.2f} °C")
@@ -116,7 +121,7 @@ def main(start, end):
 
 if __name__ == "__main__":
     ap = argparse.ArgumentParser()
-    ap.add_argument("--start", default="2026-01-01", help="YYYY-MM-DD")
+    ap.add_argument("--start", default="2023-05-28", help="YYYY-MM-DD")
     ap.add_argument("--end", default=(dt.date.today() - dt.timedelta(days=1)).isoformat(), help="YYYY-MM-DD")
     args = ap.parse_args()
     DATA.mkdir(exist_ok=True)

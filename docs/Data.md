@@ -2,17 +2,18 @@
 
 Tài liệu gồm 3 bảng, cùng khóa nối là `date` (`YYYY-MM-DD`):
 
-| File | Nội dung | Tạo bởi | Mục |
-|---|---|---|---|
-| `data/evn_daily.csv` | Số liệu vận hành của EVN (biến mục tiêu) | `parser.py` | 1–4 |
-| `data/weather.csv` | Thời tiết thực tế và dự báo của 3 miền | `weather.py` | 5 |
-| `data/calendar.csv` | Lịch: thứ, ngày lễ, nghỉ bù, Tết | `calendar_features.py` | 6 |
+| File | Nội dung | Tạo bởi | Phạm vi | Mục |
+|---|---|---|---|---|
+| `data/evn_daily.csv` | Số liệu vận hành của EVN (biến mục tiêu) | `parser.py` | 28/05/2023 → 10/11/2026, 1 254 ngày | 1–4 |
+| `data/weather.csv` | Thời tiết thực tế và dự báo của 3 miền | `weather.py` | 28/05/2023 → 10/11/2026, 1 263 ngày | 5 |
+| `data/calendar.csv` | Lịch: thứ, ngày lễ, nghỉ bù, Tết | `calendar_features.py` | 28/05/2023 → hôm nay + 60 ngày | 6 |
 
-## 1. Tổng quan
+## 1. Tổng quan `data/evn_daily.csv`
 
-- **Mỗi dòng là một ngày vận hành** của Hệ thống điện Quốc gia.
-- **Nguồn:** bài "Thông tin chung về vận hành hệ thống điện Quốc gia ngày …" trên website EVN, số liệu do Công ty Vận hành HTĐ và TTĐ Quốc gia (NSMO) cung cấp.
+- **Mỗi dòng là một ngày vận hành** của Hệ thống điện Quốc gia. 1 254 dòng, 54 cột.
+- **Nguồn:** bài "Thông tin chung về vận hành hệ thống điện Quốc gia ngày …" trên website EVN, số liệu do Công ty Vận hành HTĐ và TTĐ Quốc gia (NSMO), trước đây là Trung tâm Điều độ HTĐ Quốc gia, cung cấp.
 - File tạo bởi `parser.py` từ HTML gốc trong `data/raw_html/`. Mã hóa UTF-8 có BOM, nên mở được bằng Excel mà không lỗi font.
+- **Số liệu giữ nguyên như bài gốc**, kể cả khi bài gõ sai. Các ngày nghi có lỗi được đánh dấu bằng cột `qc_energy_diff` (mục 3), không tự sửa.
 - **Đơn vị:**
   - Công suất (power): **MW**, là giá trị tức thời tại một thời điểm.
   - Sản lượng (energy): **triệu kWh** = GWh, là tổng của cả ngày.
@@ -28,6 +29,19 @@ Tài liệu gồm 3 bảng, cùng khóa nối là `date` (`YYYY-MM-DD`):
 | `eve_<nguồn>` | Công suất của nguồn đó **lúc cao điểm tối** (**eve** = evening) |
 | hậu tố `_dc` | Số liệu tính với điện mặt trời mái nhà theo cách **ước tính đầu cực** |
 | không có `_dc` | Số liệu tính với điện mặt trời mái nhà theo cách **ước tính thương phẩm** |
+| `qc_…` | Cột kiểm tra chất lượng do parser tính, không có trong bài gốc |
+
+### Các thời kỳ định dạng bài
+
+EVN đã thay đổi cách trình bày bài theo thời gian. Parser đọc được mọi định dạng, nhưng **một số cột chỉ có ở một thời kỳ**:
+
+| Thời kỳ | Số ngày | Đặc điểm | Cột có / không có |
+|---|---|---|---|
+| 28–29/05/2023 | 2 | Bảng công suất lấy tại **giờ cố định** (12h và 21h/22h). Tuabin khí tách chạy gas / chạy dầu | Có `e_gas_gasfuel`, `e_gas_oilfuel`, `noon_/eve_gas_gasfuel`, `…_oilfuel` |
+| 30/05/2023 → 03/06/2024 | 362 | Điện mặt trời **gộp chung** trang trại và mái nhà. Một con số Pmax và sản lượng | Có `e_solar_total`. **Không có** `e_solar_farm`, `e_rooftop`, mọi cột `_dc` |
+| 04/06/2024 → nay | 890 | Tách ĐMT trang trại và mái nhà. Pmax và sản lượng tính theo **2 cách** (thương phẩm, đầu cực) | Có `e_solar_farm`, `e_rooftop`, `e_rooftop_dc`, mọi cột `_dc`. **Không có** `e_solar_total` |
+
+> **Hệ quả cho mô hình:** cột `_dc` chỉ có từ 04/06/2024. Muốn dùng toàn bộ chuỗi 2023–2026 thì dùng các cột **không `_dc`** (`pmax_mw`, `energy_mkwh`). Để so sánh điện mặt trời qua các thời kỳ, dùng `e_solar_total` cho giai đoạn trước, và `e_solar_farm + e_rooftop` cho giai đoạn sau.
 
 ### Hai cách ước tính điện mặt trời mái nhà (ĐMTMN)
 
@@ -43,13 +57,13 @@ energy_mkwh_dc = energy_mkwh - e_rooftop + e_rooftop_dc
 noon_total_dc  = noon_total  - noon_rooftop + noon_rooftop_dc
 ```
 
-> **Khuyến nghị:** dùng cột *thương phẩm* (không `_dc`) làm biến mục tiêu chính. Có thể thử bản `_dc` như một mục tiêu thay thế, vì nó gần với nhu cầu điện thực của xã hội hơn.
+> **Khuyến nghị:** dùng cột *thương phẩm* (không `_dc`) làm biến mục tiêu chính, vì nó có đủ từ 2023. Có thể thử bản `_dc` như một mục tiêu thay thế từ 06/2024, vì nó gần với nhu cầu điện thực của xã hội hơn.
 
 ---
 
 ## 2. Từ điển cột
 
-Cột "Ví dụ" lấy từ ngày **10/11/2026**. Cột "Khoảng giá trị" là min → max trong năm 2026.
+Cột "Ví dụ" lấy từ ngày **10/11/2026**. Cột "Khoảng giá trị" là min → max trên toàn bộ dữ liệu.
 
 ### 2.1. Thời gian
 
@@ -59,49 +73,73 @@ Cột "Ví dụ" lấy từ ngày **10/11/2026**. Cột "Khoảng giá trị" l�
 
 ### 2.2. Chỉ tiêu tổng (biến mục tiêu)
 
-| Cột | Đơn vị | Ý nghĩa | Ví dụ | Khoảng giá trị |
+| Cột | Đơn vị | Ý nghĩa | Ví dụ | Khoảng giá trị | Có từ |
+|---|---|---|---|---|---|
+| `pmax_mw` | MW | Công suất lớn nhất trong ngày của toàn hệ thống (đỉnh phụ tải), ĐMTMN theo thương phẩm | 50018.6 | 24 343 → 57 537 | 28/05/2023 |
+| `pmax_time` | HH:MM | Thời điểm xảy ra `pmax_mw` | 17:45 | | 28/05/2023 |
+| `energy_mkwh` | triệu kWh | Sản lượng điện sản xuất và nhập khẩu trong ngày ("sản lượng tiêu thụ" trong các bài 2023–2024), ĐMTMN theo thương phẩm | 959.9 | 434.6 → 1 215.4 | 28/05/2023 |
+| `pmax_mw_dc` | MW | Như `pmax_mw`, ĐMTMN theo đầu cực | 50136.2 | 24 984 → 58 328 | 04/06/2024 |
+| `pmax_time_dc` | HH:MM | Thời điểm xảy ra `pmax_mw_dc`. Có thể khác `pmax_time`, vì cộng thêm điện mái nhà làm đỉnh dịch về buổi chiều. | 17:00 | | 04/06/2024 |
+| `energy_mkwh_dc` | triệu kWh | Như `energy_mkwh`, ĐMTMN theo đầu cực | 971.8 | 457.5 → 1 221.9 | 04/06/2024 |
+| `qc_energy_diff` | triệu kWh | **Kiểm tra chất lượng:** tổng các nguồn `e_*` trừ `energy_mkwh`. Bình thường trong khoảng ±0,5 (do làm tròn). Giá trị lớn cho thấy bài gốc có lỗi (mục 3) | 0.0 | −399.9 → 1.6 | |
+
+**Mức trung bình theo năm** (cho thấy xu hướng tăng rõ rệt):
+
+| Năm | Số ngày | Pmax TB (MW) | Pmax lớn nhất (MW) | Sản lượng TB (triệu kWh) |
 |---|---|---|---|---|
-| `pmax_mw` | MW | Công suất lớn nhất trong ngày của toàn hệ thống (đỉnh phụ tải), ĐMTMN tính theo thương phẩm | 50018.6 | 27 919 → 57 537 |
-| `pmax_time` | HH:MM | Thời điểm xảy ra `pmax_mw` | 17:45 | |
-| `energy_mkwh` | triệu kWh | Sản lượng điện sản xuất và nhập khẩu trong ngày, ĐMTMN theo thương phẩm | 959.9 | 511.0 → 1 215.4 |
-| `pmax_mw_dc` | MW | Như `pmax_mw`, ĐMTMN theo đầu cực | 50136.2 | 27 928 → 58 328 |
-| `pmax_time_dc` | HH:MM | Thời điểm xảy ra `pmax_mw_dc`. Có thể khác `pmax_time`, vì cộng thêm điện mái nhà làm đỉnh dịch về buổi chiều. | 17:00 | |
-| `energy_mkwh_dc` | triệu kWh | Như `energy_mkwh`, ĐMTMN theo đầu cực | 971.8 | 515.2 → 1 221.9 |
+| 2023 (từ 28/05) | 206 | 39 331 | 45 474 | 794 |
+| 2024 | 366 | 41 717 | 48 955 | 844 |
+| 2025 | 365 | 44 053 | 54 370 | 878 |
+| 2026 (đến 10/11) | 314 | 47 883 | 57 537 | 979 |
 
 ### 2.3. Cơ cấu sản lượng theo nguồn: `e_*` (triệu kWh/ngày)
 
-Tổng các cột này (dùng `e_rooftop`) bằng `energy_mkwh`, sai lệch do làm tròn khoảng ±0,3.
+Tổng các nguồn bằng `energy_mkwh`, sai lệch do làm tròn khoảng ±0,5. Khi tính tổng, điện mặt trời là `e_solar_total` (trước 04/06/2024) hoặc `e_solar_farm + e_rooftop` (từ 04/06/2024).
 
-| Cột | Nguồn (tên gốc trong bài) | Ví dụ | Khoảng giá trị |
-|---|---|---|---|
-| `e_hydro` | Thủy điện | 183.2 | 83.4 → 410.4 |
-| `e_coal` | Nhiệt điện than | 418.4 | 192.5 → 644.0 |
-| `e_gas` | Tuabin khí (Gas + Dầu DO) | 123.6 | 28.6 → 123.6 |
-| `e_oil` | Nhiệt điện dầu | 3.6 | 0.0 → 9.6 |
-| `e_wind` | Điện gió | 124.7 | 4.0 → 131.1 |
-| `e_solar_farm` | Điện mặt trời trang trại (nhà máy nối lưới) | 33.6 | 19.6 → 58.8 |
-| `e_rooftop` | ĐMT mái nhà (ước tính thương phẩm) | 26.8 | 11.3 → 47.2 |
-| `e_rooftop_dc` | ĐMT mái nhà (ước tính đầu cực) | 38.7 | 16.3 → 61.9 |
-| `e_import` | Nhập khẩu điện (Lào, Trung Quốc…) | 42.9 | 13.3 → 66.3 |
-| `e_other` | Khác (sinh khối, diesel…) | 3.2 | 2.9 → 6.3 |
+| Cột | Nguồn (tên gốc trong bài) | Ví dụ | Khoảng giá trị | Thời kỳ |
+|---|---|---|---|---|
+| `e_hydro` | Thủy điện | 183.2 | 30.8* → 487.7 | toàn bộ |
+| `e_coal` | Nhiệt điện than | 418.4 | 192.5 → 644.0 | toàn bộ |
+| `e_gas` | Tuabin khí (Gas + Dầu DO) | 123.6 | 18.0 → 123.6 | toàn bộ |
+| `e_gas_gasfuel` | Tuabin khí chạy gas | | 86.0 → 94.8 | chỉ 28–29/05/2023 |
+| `e_gas_oilfuel` | Tuabin khí chạy dầu | | 2.4 → 16.2 | chỉ 28–29/05/2023 |
+| `e_oil` | Nhiệt điện dầu | 3.6 | 0.0 → 14.8 | toàn bộ (thiếu 19 ngày, bài không ghi dòng này) |
+| `e_wind` | Điện gió | 124.7 | 2.6 → 131.1 | toàn bộ |
+| `e_solar_total` | Điện mặt trời, **gộp** trang trại và mái nhà | | 31.6 → 94.3 | đến 03/06/2024 |
+| `e_solar_farm` | ĐMT trang trại (nhà máy nối lưới) | 33.6 | 7.1 → 58.8 | từ 04/06/2024 |
+| `e_rooftop` | ĐMT mái nhà (ước tính thương phẩm) | 26.8 | 4.1 → 47.2 | từ 04/06/2024 |
+| `e_rooftop_dc` | ĐMT mái nhà (ước tính đầu cực) | 38.7 | 9.4 → 61.9 | từ 04/06/2024 |
+| `e_import` | Nhập khẩu điện (Lào, Trung Quốc…) | 42.9 | 0.4 → 66.3 | toàn bộ |
+| `e_other` | Khác (sinh khối, diesel…) | 3.2 | 1.0 → 6.3 | toàn bộ |
+
+\* 30.8 là lỗi gõ của bài ngày 20/09/2025 (mục 3). Giá trị nhỏ nhất thật là 40.9 (01/05/2024).
 
 ### 2.4. Công suất huy động tại hai thời điểm: `noon_*`, `eve_*` (MW)
 
-Lấy từ bảng "CÔNG SUẤT HUY ĐỘNG NGÀY …" trong bài. Mỗi nguồn có hai giá trị:
+Lấy từ bảng "CÔNG SUẤT HUY ĐỘNG …" trong bài. Mỗi nguồn có hai giá trị:
 - `noon_<nguồn>`: lúc **thấp điểm trưa**. Bức xạ mặt trời mạnh nên điện mặt trời phát nhiều, còn phụ tải lấy từ lưới thấp.
 - `eve_<nguồn>`: lúc **cao điểm tối**. Không có mặt trời, các nguồn khác phải bù lên.
 
-`<nguồn>` dùng cùng tên với mục 2.3: `hydro`, `coal`, `gas`, `oil`, `wind`, `solar_farm`, `rooftop`, `rooftop_dc`, `import`, `other`. Ngoài ra còn hai cột tổng:
+`<nguồn>` dùng cùng tên với mục 2.3: `hydro`, `coal`, `gas`, `gas_gasfuel`, `gas_oilfuel`, `oil`, `wind`, `solar_farm`, `rooftop`, `rooftop_dc`, `import`, `other`. Khác với mục 2.3, bảng này **luôn tách** `solar_farm` và `rooftop`, kể cả ở thời kỳ 2023–2024. Ngoài ra còn các cột:
 
 | Cột | Ý nghĩa | Ví dụ (trưa / tối) |
 |---|---|---|
 | `noon_total`, `eve_total` | Tổng công suất toàn quốc, ĐMTMN theo thương phẩm (= tổng các nguồn, dùng `rooftop`) | 38818.1 / 41320.5 |
-| `noon_total_dc`, `eve_total_dc` | Tổng công suất toàn quốc, ĐMTMN theo đầu cực | 40389.2 / 41320.5 |
-| `noon_label`, `eve_label` | Tiêu đề cột gốc trong bảng của EVN, giữ lại để biết định nghĩa thời điểm | "Khi phụ tải vào thấp điểm trưa" / "… cao điểm tối" |
+| `noon_total_dc`, `eve_total_dc` | Tổng công suất toàn quốc, ĐMTMN theo đầu cực (từ 04/06/2024) | 40389.2 / 41320.5 |
+| `noon_label`, `eve_label` | Thời điểm lấy số liệu, chuẩn hóa từ tiêu đề cột của bảng gốc (xem bảng dưới) | thấp điểm trưa / cao điểm tối |
+
+| `noon_label` | `eve_label` | Số ngày | Thời kỳ |
+|---|---|---|---|
+| `12:00` | `22:00` | 1 | 28/05/2023 |
+| `12:00` | `21:00` | 1 | 29/05/2023 |
+| `thấp điểm trưa` | `cao điểm chiều-tối` | 267 | 30/05/2023 → 02/03/2024 |
+| `thấp điểm trưa` | `cao điểm tối` | 981 | 03/03/2024 → nay |
+| trống | trống | 4 | ngày bài không có bảng (mục 3) |
 
 **Lưu ý:**
-- `eve_solar_farm`, `eve_rooftop`, `eve_rooftop_dc` luôn bằng **0** vì buổi tối không có mặt trời. Hai cột tổng `eve_total` và `eve_total_dc` do đó luôn bằng nhau. Khi làm mô hình có thể bỏ các cột này.
-- Bảng **không ghi giờ cụ thể** của hai thời điểm. "Cao điểm tối" khác với thời điểm Pmax: Pmax thường xảy ra 14–16h hoặc khoảng 18h, nên `eve_total` thường nhỏ hơn `pmax_mw`.
+- Hai ngày đầu lấy số liệu tại **giờ cố định**. Từ 30/05/2023, số liệu lấy tại **thời điểm thấp điểm và cao điểm thực tế** của từng ngày, nên giữa hai thời kỳ này số liệu không hoàn toàn so sánh được. Việc đổi chữ "chiều-tối" thành "tối" (03/03/2024) có thể chỉ là đổi cách viết. Mình chưa có thông tin xác nhận.
+- `eve_solar_farm`, `eve_rooftop`, `eve_rooftop_dc` bằng **0** vì buổi tối không có mặt trời (duy nhất ngày 02/06/2023 có `eve_rooftop` = 1). Hai cột tổng `eve_total` và `eve_total_dc` do đó luôn bằng nhau. Khi làm mô hình có thể bỏ các cột này.
+- Bảng **không ghi giờ cụ thể** của thời điểm thấp điểm và cao điểm. "Cao điểm tối" khác với thời điểm Pmax: Pmax thường xảy ra 14–16h hoặc khoảng 18h, nên `eve_total` thường nhỏ hơn `pmax_mw` (99,7% số ngày năm 2026).
 
 ### 2.5. Truy vết nguồn
 
@@ -117,21 +155,50 @@ Lấy từ bảng "CÔNG SUẤT HUY ĐỘNG NGÀY …" trong bài. Mỗi nguồn
 
 ## 3. Dữ liệu thiếu và điểm bất thường
 
+### 3.1. Ngày không có bài (9 ngày, 0,7%)
+
+`2023-06-07`, `2023-06-08`, `2023-06-28` → `2023-07-03` (6 ngày), `2023-08-09`. Danh sách nằm trong `data/not_found_dates.txt`.
+
+Đã kiểm tra bằng 3 cách: tìm kiếm trên website (nhiều kiểu tiêu đề), dò toàn bộ mã bài nằm giữa hai ngày lân cận, và đối chiếu trang danh sách của chuyên mục (chuyên mục nhảy thẳng từ 06/06 sang 09/06/2023). Kết luận: **EVN không đăng bài cho các ngày này trong chuyên mục.** Các dòng này không có trong `evn_daily.csv`. Khi làm mô hình cần xử lý khoảng trống, không được coi ngày kế tiếp là "hôm qua".
+
+### 3.2. Bài thiếu một phần số liệu (trong bài gốc)
+
+| Ngày | Thiếu |
+|---|---|
+| 08/10/2023, 10/10/2023 | Pmax và giờ Pmax |
+| 07/12/2023 | Pmax, sản lượng và cơ cấu nguồn (bài chỉ có bảng công suất) |
+| 03/12/2023, 27/12/2023, 13/03/2026, 14/03/2026 | Bảng công suất (`noon_*`, `eve_*`) |
+
+Các ô thiếu để trống (NaN), không tự điền.
+
+### 3.3. Số liệu nghi có lỗi trong bài gốc (đánh dấu bằng `qc_energy_diff`)
+
+| Ngày | `qc_energy_diff` | Nhận định |
+|---|---|---|
+| **20/09/2025** | **−399.9** | Bài ghi thủy điện **30,8** triệu kWh, các ngày lân cận là 405–430. Tính ngược từ tổng thì giá trị đúng khoảng **430,7**: bài bị mất chữ số "4". |
+| 24/05 → 02/06/2024 (10 ngày) | −5.9 → −6.5 | Lệch đều khoảng 6 triệu kWh mỗi ngày. Có thể một nguồn không được liệt kê trong giai đoạn này. Chưa rõ nguyên nhân. |
+| 04/07/2023 | −7.8 | Chưa rõ nguyên nhân |
+| 10/10/2025 | −10.0 | Chưa rõ nguyên nhân |
+
+> **Quy tắc:** ngày nào `|qc_energy_diff| > 2` thì xem lại trước khi dùng cột `e_*`. Biến mục tiêu `pmax_mw` và `energy_mkwh` của các ngày này vẫn bình thường so với các ngày lân cận.
+
+### 3.4. Các trường hợp khác
+
 | Vấn đề | Ngày | Ghi chú |
 |---|---|---|
-| Thiếu toàn bộ cột `noon_*`, `eve_*` | 13/03/2026, 14/03/2026 | Bài gốc không đăng bảng công suất. Để trống (NaN), không tự điền. |
-| Phụ tải thấp bất thường | 17–21/02/2026 | **Tết Nguyên đán Bính Ngọ**. Pmax chỉ khoảng 28 000 MW. Đây là số liệu thật, không phải lỗi, nhưng cần biến lịch Tết để mô hình học được. |
-| Bài gốc ghi sai đơn vị | 04/08/2026 | Bài viết "3,6 triệu k" (thiếu "Wh"). Parser đã xử lý, `e_other` = 3.6. |
+| Bài đăng trùng | 10/08/2023 (hai bài khác số liệu), 24–27/11/2024 (đăng lại y hệt) | Giữ bài có `article_id` lớn nhất, coi là bản mới hoặc bản đính chính |
+| Phụ tải thấp bất thường | Tết Nguyên đán: 10/02/2024, 29/01/2025, 17/02/2026 | Pmax thấp nhất cả chuỗi (24 343 MW vào Mùng 1 Tết 2024). Là số liệu thật, cần biến lịch Tết |
+| Cách viết khác thường trong bài gốc | Nhiều bài năm 2023, 04/08/2026 | "37 950,3" (dấu cách ngăn nghìn), "triệu Kwh", "65,4: triệu kWh", "triệu k", tiêu đề "06/102023". Parser đã xử lý được tất cả |
 
-Danh sách bài parse thiếu trường hoặc trùng ngày được ghi vào `data/parse_issues.csv` mỗi lần chạy `parser.py`. Lần chạy hiện tại: **0 bài**.
+Danh sách bài parse thiếu trường hoặc trùng ngày được ghi vào `data/parse_issues.csv` mỗi lần chạy `parser.py`. Lần chạy hiện tại: 3 bài thiếu trường, 5 ngày trùng.
 
 ## 4. Các file dữ liệu khác
 
 | File | Nội dung |
 |---|---|
 | `data/links.csv` | Danh sách bài: `article_id`, `date`, `url`, `title` |
-| `data/raw_html/*.html` | HTML gốc từng bài. Giữ lại để parse lại khi cần, không phải crawl lại. |
-| `data/not_found_dates.txt` | Các ngày crawler không tìm thấy bài (hiện trống) |
+| `data/raw_html/*.html` | HTML gốc từng bài (không đưa lên Git). Giữ lại để parse lại khi cần, không phải crawl lại. |
+| `data/not_found_dates.txt` | Các ngày crawler không tìm thấy bài (9 ngày, mục 3.1) |
 | `data/parse_issues.csv` | Bài parse lỗi hoặc trùng ngày |
 
 ---
@@ -139,7 +206,7 @@ Danh sách bài parse thiếu trường hoặc trùng ngày được ghi vào `d
 ## 5. `data/weather.csv`: thời tiết
 
 - **Nguồn:** [Open-Meteo](https://open-meteo.com/), miễn phí, giấy phép CC BY 4.0. Múi giờ `Asia/Ho_Chi_Minh`, nên mỗi "ngày" tính từ 00:00 đến 23:59 giờ Việt Nam.
-- **Phạm vi:** 01/01/2026 → 10/11/2026, 314 ngày, 64 cột, không có ô trống.
+- **Phạm vi:** 28/05/2023 → 10/11/2026, 1 263 ngày, 64 cột. Gồm cả 9 ngày EVN không có bài.
 - **Tên cột:** `<loại>_<biến>_<địa điểm>`, ví dụ `fc_tmax_hn` là nhiệt độ cao nhất *dự báo* tại Hà Nội.
 
 ### 5.1. Loại số liệu: `obs_` và `fc_`
@@ -149,7 +216,16 @@ Danh sách bài parse thiếu trường hoặc trùng ngày được ghi vào `d
 | `obs_` | Thời tiết **thực tế** (tái phân tích, gần với số đo) | Archive API | Phân tích (EDA), hiểu quan hệ thời tiết và phụ tải |
 | `fc_` | **Bản dự báo phát hành trước 1 ngày** (`*_previous_day1`), gộp từ dữ liệu theo giờ | Previous Runs API | **Huấn luyện và đánh giá mô hình**, vì đây là thông tin mô hình thực sự có khi dự báo ngày mai |
 
-> **Vì sao cần `fc_`:** khi dự báo phụ tải ngày mai, ta chưa biết thời tiết thật của ngày mai, chỉ có bản dự báo. Nếu đánh giá mô hình bằng `obs_`, sai số sẽ thấp hơn so với khi dùng thật. Sai số của `fc_` so với `obs_` (Tmax, năm 2026): Hà Nội 0,80°C, Đà Nẵng 0,75°C, TP.HCM 0,72°C, toàn quốc 0,50°C.
+> **Vì sao cần `fc_`:** khi dự báo phụ tải ngày mai, ta chưa biết thời tiết thật của ngày mai, chỉ có bản dự báo. Nếu đánh giá mô hình bằng `obs_`, sai số sẽ thấp hơn so với khi dùng thật. Sai số của `fc_` so với `obs_` (Tmax, toàn bộ giai đoạn): Hà Nội 1,18°C, Đà Nẵng 1,07°C, TP.HCM 1,03°C, toàn quốc 0,78°C. Riêng năm 2026 sai số nhỏ hơn: 0,72–0,80°C.
+
+**Dữ liệu dự báo bị thiếu** (giới hạn của Open-Meteo, không phải lỗi code):
+
+| Biến `fc_` | Thiếu | Lý do |
+|---|---|---|
+| `tmax`, `tmin`, `tmean` | 21 ngày, 30/12/2023 → 19/01/2024 | Kho lưu bản dự báo cũ bị gián đoạn |
+| `app_tmax`, `rh`, `rad`, `cloud`, `precip` | 237 ngày, 28/05/2023 → 19/01/2024 | Open-Meteo chỉ lưu các biến này từ 20/01/2024 |
+
+Ngày nào bản dự báo có dưới 20/24 giờ dữ liệu thì để trống (`MIN_HOURS` trong `weather.py`), vì tính max, min hay tổng từ vài giờ sẽ cho kết quả sai. Các cột `obs_` không thiếu ngày nào.
 
 ### 5.2. Biến
 
@@ -182,7 +258,7 @@ Mỗi thành phố chỉ là một điểm đại diện cho cả miền. Thời
 ## 6. `data/calendar.csv`: lịch
 
 - **Nguồn:** thư viện `holidays` 0.107 (Vietnam). Lịch đã gồm ngày lễ theo Bộ luật Lao động 2019, Tết và Giỗ Tổ tính theo âm lịch, ngày nghỉ bù và ngày hoán đổi theo quyết định hằng năm của Chính phủ.
-- **Phạm vi:** 01/01/2026 → hôm nay + 60 ngày. Lịch biết trước được, nên file có sẵn cả các ngày tương lai để dùng khi dự báo.
+- **Phạm vi:** 28/05/2023 → hôm nay + 60 ngày. Lịch biết trước được, nên file có sẵn cả các ngày tương lai để dùng khi dự báo.
 
 | Cột | Ý nghĩa | Ví dụ |
 |---|---|---|
@@ -201,18 +277,18 @@ Mỗi thành phố chỉ là một điểm đại diện cho cả miền. Thời
 | `is_post_day_off` | 1 nếu là ngày làm việc ngay **sau** một ngày nghỉ | 0 |
 | `tet_offset` | Số ngày so với Mùng 1 Tết gần nhất (âm = trước Tết). Ví dụ 16/02/2026 (Giao thừa) = −1 | −167 |
 
-**Các kỳ nghỉ năm 2026 trong file:** Tết Dương lịch 01/01, Tết Nguyên đán 14–22/02 (9 ngày), Giỗ Tổ 26–27/04, 30/4–1/5 (30/04–03/05), Quốc khánh 29/08–02/09 (gồm 31/08 nghỉ thay cho thứ Bảy 22/08 đi làm bù), Ngày Văn hóa Việt Nam 24/11.
+**Mùng 1 Tết trong dữ liệu:** 10/02/2024, 29/01/2025, 17/02/2026. **Thứ Bảy làm bù:** 04/05/2024, 26/04/2025, 22/08/2026.
 
 ### 6.1. Kiểm chứng với số liệu phụ tải
 
-Đối chiếu với `energy_mkwh`, tính tỉ lệ so với trung vị các ngày làm việc cùng tuần:
+Đối chiếu với `energy_mkwh` giai đoạn 2023–2026, tính tỉ lệ so với trung vị các ngày làm việc cùng tuần:
 
 | Loại ngày | Tỉ lệ phụ tải |
 |---|---|
-| Thứ Hai – thứ Sáu làm việc | 0,98 – 1,01 |
+| Thứ Hai – thứ Sáu làm việc | 0,98 – 1,00 |
 | **Thứ Bảy** | **0,97** |
-| Chủ nhật | 0,89 |
-| Ngày lễ (01/01, 30/04, 01/05, 01–02/09) | 0,73 – 0,82 |
-| Thứ Bảy làm bù 22/08 | 0,97, không khác thứ Bảy thường |
+| Chủ nhật | 0,88 |
+| Ngày lễ ngoài Tết | trung bình 0,79 (0,65 – 0,96) |
+| Thứ Bảy làm bù (04/05/2024, 26/04/2025, 22/08/2026) | 0,97 – 1,00, gần bằng thứ Bảy thường |
 
 > **Phát hiện:** theo luật thứ Bảy là ngày nghỉ (`is_day_off = 1`), nhưng phụ tải thứ Bảy **gần như bằng ngày làm việc**, vì phần lớn phụ tải công nghiệp vẫn chạy. Khi làm mô hình, nên dùng riêng `dow` và `is_holiday` thay vì chỉ dùng `is_day_off`.

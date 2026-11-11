@@ -1,24 +1,8 @@
-"""Crawl EVN daily operating summaries ("Thông tin chung về vận hành HTĐ Quốc gia").
-
-The category listing's pager is broken server-side (postbacks only reach pages 1-5 and
-the last page), so the crawl works in three steps:
-
-  1. listing pages 1-5 + last page   -> newest posts and the first date of the series
-  2. site search, one query per date -> every day still missing
-  3. download each post              -> data/raw_html/<article_id>.html
-
-Results go to data/links.csv (article_id, date, url, title). Everything is resumable:
-re-running only fetches what is missing, so the same command works as the daily job.
-
-    python crawler.py                     # 01/01/2026 -> yesterday
-    python crawler.py --start 2025-01-01 --end 2025-12-31
-    python crawler.py --retry-not-found   # also re-search dates that were not found before
-    python crawler.py --scan-ids          # probe article ids around dates search could not find
-"""
 import argparse
 import csv
 import datetime as dt
 import re
+import sys
 import time
 from pathlib import Path
 
@@ -31,7 +15,8 @@ BASE = "https://www.evn.com.vn"
 CTRL = "ctl00$ContentPlaceHolder1$ctl00$11260$"
 TITLE = "Thông tin chung về vận hành hệ thống điện Quốc gia ngày {}"
 LINK_RE = re.compile(r"/d/vi-VN/news/[^\"'#?]+-60-2015-(\d+)")
-DATE_RE = re.compile(r"ngày\s*(\d{1,2})\s*/\s*(\d{1,2})\s*/\s*(\d{4})", re.I)
+# second "/" optional: some titles have typos like "ngày 06/102023"
+DATE_RE = re.compile(r"ngày\s*(\d{1,2})\s*/\s*(\d{1,2})\s*/?\s*(\d{4})", re.I)
 
 DATA = Path(__file__).parent / "data"
 RAW = DATA / "raw_html"
@@ -178,7 +163,7 @@ def scan_id_gaps(links, start, end, max_gap=400):
         html = request("GET", f"{BASE}/d/vi-VN/news/x-60-2015-{aid}")
         title = page_title(html)
         d = title_date(title)
-        if "vận hành hệ thống điện" in title.lower():
+        if "thông tin chung về vận hành" in title.lower():
             # Titles without a single d/m/yyyy (e.g. multi-day holiday posts) are kept with
             # an empty date for manual review; the parser still reads the date from the body.
             links[str(aid)] = {"date": d.isoformat() if d else "", "url": f"{BASE}/d/vi-VN/news/x-60-2015-{aid}", "title": title}
@@ -206,18 +191,19 @@ if __name__ == "__main__":
     ap = argparse.ArgumentParser()
     ap.add_argument("--retry-not-found", action="store_true", help="re-search dates not found earlier")
     ap.add_argument("--scan-ids", action="store_true", help="probe article ids around dates search missed")
-    ap.add_argument("--start", type=dt.date.fromisoformat, default=dt.date(2026, 1, 1), help="first date, YYYY-MM-DD")
+    ap.add_argument("--start", type=dt.date.fromisoformat, default=dt.date(2023, 5, 28), help="first date, YYYY-MM-DD (series starts 2023-05-28)")
     ap.add_argument("--end", type=dt.date.fromisoformat, default=dt.date.today() - dt.timedelta(days=1),
                     help="last date, YYYY-MM-DD (default: yesterday)")
     args = ap.parse_args()
     DATA.mkdir(exist_ok=True)
+    sys.stdout.reconfigure(encoding="utf-8")  # Vietnamese titles in the log on Windows consoles
+    # links.csv keeps every post ever found; --start/--end only limit searching and downloading.
     links = load_links()
     crawl_listing(links)
-    links = in_range(links, args.start, args.end)
     save_links(links)
     search_missing(links, args.start, args.end, args.retry_not_found)
     save_links(links)
     if args.scan_ids:
         scan_id_gaps(links, args.start, args.end)
         save_links(links)
-    download_posts(links)
+    download_posts(in_range(links, args.start, args.end))

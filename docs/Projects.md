@@ -22,7 +22,7 @@ Dự báo phụ tải của Hệ thống điện Quốc gia cho **ngày hôm sau
 **Nguồn chính:** chuyên mục [Thông tin tóm tắt vận hành HTĐ Quốc gia](https://www.evn.com.vn/vi-VN/news-l/Thong-tin-tom-tat-van-hanh-HTD-Quoc-gia-60-2015) của EVN. Số liệu do Công ty Vận hành HTĐ và TTĐ Quốc gia (NSMO) cung cấp.
 
 - Mỗi ngày có 1 bài, đăng khoảng 10–11h sáng hôm sau.
-- Chuỗi bài bắt đầu từ 28/05/2023. **Phạm vi dự án hiện tại: 01/01/2026 → nay.**
+- Chuỗi bài bắt đầu từ 28/05/2023. **Phạm vi dự án: 28/05/2023 → nay** (mở rộng từ "chỉ năm 2026" ngày 11/11/2026, để có đủ 3 lần Tết và nhiều chu kỳ năm).
 - Mỗi bài gồm:
   - Pmax và giờ xảy ra Pmax.
   - Sản lượng ngày.
@@ -56,12 +56,18 @@ Lịch lễ/Tết ──► calendar_features.py──────────�
 - [x] `parser.py`: tách số liệu thành bảng, mỗi ngày một dòng.
 - [x] Chạy parser trên toàn bộ dữ liệu năm 2026: **314/314 ngày** (01/01 → 10/11/2026), không thiếu ngày nào.
 - [x] Kiểm tra chất lượng: tổng các nguồn khớp `energy_mkwh` (lệch trung bình 0,05 triệu kWh). Chỉ thiếu bảng công suất ngày 13/03 và 14/03, vì bài gốc không đăng bảng.
+- [x] **Mở rộng sang 28/05/2023 → 31/12/2025:** tổng cộng **1 254/1 263 ngày** (99,3%). 9 ngày năm 2023 EVN không đăng bài (đã kiểm tra bằng tìm kiếm, dò mã bài và đối chiếu chuyên mục).
+  - Crawler: bước dò ID tìm thêm 3 bài mà tìm kiếm bỏ sót (06/10/2023 có tiêu đề gõ sai "06/102023", 28/11/2024, 04/12/2024). Đã sửa lỗi `links.csv` bị xóa link ngoài khoảng `--start/--end`, lỗi in tiếng Việt ra log, và lỗi nhận nhầm bài tin tức.
+  - Parser: xử lý 3 thời kỳ định dạng (mốc 30/05/2023 và 04/06/2024). Sửa lỗi **lấy nhầm bảng sản lượng làm bảng công suất** (tháng 6/2023), cùng các cách viết số và đơn vị khác thường.
+  - Thêm cột kiểm tra chất lượng `qc_energy_diff`, phát hiện bài 20/09/2025 gõ sai sản lượng thủy điện (chi tiết: `Data.md` mục 3).
 
 ### Giai đoạn 2: Dữ liệu bổ sung hoàn thành (11/11/2026)
 - [x] `weather.py`: thời tiết thực tế (`obs_`, Archive API) và **dự báo trước 1 ngày** (`fc_`, Previous Runs API) cho Hà Nội, Đà Nẵng, TP.HCM, kèm trung bình có trọng số toàn quốc → `data/weather.csv` (314 ngày, không thiếu).
 - [x] `calendar_features.py`: thứ, ngày lễ, nghỉ bù, làm bù, độ dài kỳ nghỉ, khoảng cách tới Tết → `data/calendar.csv` (có sẵn 60 ngày tương lai).
 - [x] Kiểm chứng: lịch nghỉ khớp với các ngày phụ tải giảm. Phát hiện thứ Bảy có phụ tải gần bằng ngày thường (xem `Data.md` mục 6.1).
+- [x] **Mở rộng sang 28/05/2023:** `weather.csv` 1 263 ngày, `calendar.csv` từ 28/05/2023. Bản dự báo `fc_` của Open-Meteo bị thiếu: nhiệt độ thiếu 21 ngày (30/12/2023 → 19/01/2024), các biến khác chỉ có từ 20/01/2024 (chi tiết: `Data.md` mục 5.1).
 - [ ] Còn mở: trọng số miền 0,45/0,10/0,45 là giả định, cần thay bằng số liệu chính thức nếu có.
+- [ ] Còn mở (quyết định ở Giai đoạn 4): xử lý giai đoạn thiếu `fc_` trước 20/01/2024: huấn luyện từ 2024, hay dùng `obs_` thay thế cho giai đoạn đầu.
 
 ### Giai đoạn 3: Phân tích khám phá (EDA)
 - [ ] Xu hướng, mùa vụ theo tuần và theo tháng.
@@ -90,8 +96,10 @@ Lịch lễ/Tết ──► calendar_features.py──────────�
 
 | Rủi ro | Ảnh hưởng | Cách xử lý |
 |---|---|---|
-| Chỉ có khoảng 310 ngày (năm 2026) | Không học được mùa vụ theo năm và Tết của các năm trước | Có thể mở rộng sang 2023–2025 bằng `--start 2023-05-28` |
-| Định dạng bài thay đổi theo thời gian | Parser bỏ sót cột | Lưu HTML gốc; `parse_issues.csv` liệt kê các bài lỗi |
+| Dữ liệu ngắn | Chỉ có 3 lần Tết, khoảng 3,5 chu kỳ năm | Đã mở rộng tối đa về 28/05/2023 (bài đầu tiên của chuyên mục). Báo cáo rõ độ tin cậy của kết luận về Tết |
+| Định dạng bài thay đổi theo thời gian | Parser bỏ sót hoặc đọc sai cột | Lưu HTML gốc; `parse_issues.csv` liệt kê bài lỗi; `qc_energy_diff` kiểm tra tổng các nguồn |
+| Bài gốc gõ sai số liệu | Giá trị sai lọt vào mô hình | Giữ nguyên số gốc, đánh dấu bằng `qc_energy_diff`, quyết định xử lý ở bước làm sạch |
+| Cột chỉ có ở một thời kỳ (`_dc`, `e_solar_total`) | Không dùng được cho toàn chuỗi | Biến mục tiêu dùng cột không `_dc`, có đủ từ 2023 |
 | Trang danh sách phân trang lỗi | Không duyệt được hết bài | Tìm kiếm theo ngày và dò ID (đã xử lý trong crawler) |
 | EVN đăng muộn hoặc thiếu ngày | Dự báo dựa trên dữ liệu cũ | Crawler chạy lại được; ghi các ngày không tìm thấy vào `not_found_dates.txt` |
 | Hai cách ước tính điện mặt trời mái nhà | Nhầm lẫn khi so sánh | Mặc định dùng cột *thương phẩm*, giữ cột `_dc` để đối chiếu |
@@ -117,7 +125,7 @@ evn_load/
 
 ```bash
 cd "C:\Users\ACER\Desktop\Data Science\evn_load"
-python crawler.py              # thu thập 01/01/2026 → hôm qua
+python crawler.py              # thu thập 28/05/2023 → hôm qua
 python crawler.py --scan-ids   # thêm bước dò ID cho ngày còn thiếu
 python parser.py               # tạo data/evn_daily.csv
 python weather.py              # tạo data/weather.csv
