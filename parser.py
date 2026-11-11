@@ -223,7 +223,15 @@ def main():
     parts = ["e_hydro", "e_coal", "e_gas", "e_oil", "e_wind", "e_import", "e_other"]
     df["qc_energy_diff"] = (df[parts].sum(axis=1, min_count=len(parts)) + solar - df["energy_mkwh"]).round(1)
 
-    cols = FIRST + ["qc_energy_diff"] + sorted(c for c in df.columns if c.startswith("e_"))
+    # Some posts repeat the previous/next day's figures digit for digit (copy-paste on EVN's side,
+    # e.g. 31/12/2025 = 01/01/2026). Only one of the two days can be right: flag both.
+    key = ["pmax_mw", "pmax_time", "energy_mkwh", "e_hydro", "e_coal"]
+    cal = df.set_index(pd.to_datetime(df["date"]))[key].asfreq("D")
+    same_prev = cal.eq(cal.shift(1)).all(axis=1)
+    same_next = cal.eq(cal.shift(-1)).all(axis=1)
+    df["qc_same_as_adjacent"] = (same_prev | same_next).reindex(pd.to_datetime(df["date"])).astype(int).values
+
+    cols = FIRST + ["qc_energy_diff", "qc_same_as_adjacent"] + sorted(c for c in df.columns if c.startswith("e_"))
     cols += sorted(c for c in df.columns if c.startswith(("noon_", "eve_")))
     cols += ["article_id", "published", "title"]
     df = df.reindex(columns=[c for c in cols if c in df.columns])

@@ -10,7 +10,7 @@ Tài liệu gồm 3 bảng, cùng khóa nối là `date` (`YYYY-MM-DD`):
 
 ## 1. Tổng quan `data/evn_daily.csv`
 
-- **Mỗi dòng là một ngày vận hành** của Hệ thống điện Quốc gia. 1 254 dòng, 54 cột.
+- **Mỗi dòng là một ngày vận hành** của Hệ thống điện Quốc gia. 1 254 dòng, 55 cột.
 - **Nguồn:** bài "Thông tin chung về vận hành hệ thống điện Quốc gia ngày …" trên website EVN, số liệu do Công ty Vận hành HTĐ và TTĐ Quốc gia (NSMO), trước đây là Trung tâm Điều độ HTĐ Quốc gia, cung cấp.
 - File tạo bởi `parser.py` từ HTML gốc trong `data/raw_html/`. Mã hóa UTF-8 có BOM, nên mở được bằng Excel mà không lỗi font.
 - **Số liệu giữ nguyên như bài gốc**, kể cả khi bài gõ sai. Các ngày nghi có lỗi được đánh dấu bằng cột `qc_energy_diff` (mục 3), không tự sửa.
@@ -81,7 +81,8 @@ Cột "Ví dụ" lấy từ ngày **10/11/2026**. Cột "Khoảng giá trị" l�
 | `pmax_mw_dc` | MW | Như `pmax_mw`, ĐMTMN theo đầu cực | 50136.2 | 24 984 → 58 328 | 04/06/2024 |
 | `pmax_time_dc` | HH:MM | Thời điểm xảy ra `pmax_mw_dc`. Có thể khác `pmax_time`, vì cộng thêm điện mái nhà làm đỉnh dịch về buổi chiều. | 17:00 | | 04/06/2024 |
 | `energy_mkwh_dc` | triệu kWh | Như `energy_mkwh`, ĐMTMN theo đầu cực | 971.8 | 457.5 → 1 221.9 | 04/06/2024 |
-| `qc_energy_diff` | triệu kWh | **Kiểm tra chất lượng:** tổng các nguồn `e_*` trừ `energy_mkwh`. Bình thường trong khoảng ±0,5 (do làm tròn). Giá trị lớn cho thấy bài gốc có lỗi (mục 3) | 0.0 | −399.9 → 1.6 | |
+| `qc_energy_diff` | triệu kWh | **Kiểm tra chất lượng:** tổng các nguồn `e_*` trừ `energy_mkwh`. Bình thường trong khoảng ±0,5 (do làm tròn). Giá trị lớn cho thấy bài gốc có lỗi (mục 3.3) | 0.0 | −399.9 → 1.6 | |
+| `qc_same_as_adjacent` | 0/1 | **Kiểm tra chất lượng:** 1 nếu Pmax, giờ Pmax, sản lượng, thủy điện và nhiệt điện than **trùng y hệt** ngày liền trước hoặc liền sau. Dấu hiệu EVN đăng nhầm số liệu (mục 3.3) | 0 | 0 → 1 | |
 
 **Mức trung bình theo năm** (cho thấy xu hướng tăng rõ rệt):
 
@@ -149,7 +150,7 @@ Lấy từ bảng "CÔNG SUẤT HUY ĐỘNG …" trong bài. Mỗi nguồn có h
 | `published` | Thời điểm EVN đăng bài (`DD/MM/YYYY HH:MM`, GMT+7), thường là khoảng 10–11h sáng **hôm sau** | 11/11/2026 10:55 |
 | `title` | Tiêu đề gốc của bài | Thông tin chung về vận hành hệ thống điện Quốc gia ngày 10/11/2026 |
 
-> `published` quan trọng khi dự báo thật: số liệu của ngày D chỉ có từ khoảng 11h ngày D+1. Khi dự báo cho ngày D+1, dữ liệu mới nhất có được là của ngày D.
+> **`published` quyết định khoảng cách dự báo.** Số liệu của ngày D chỉ có từ khoảng 11h ngày D+1. Dự báo cho ngày D+1 phải xong **trong ngày D**, lúc đó số liệu mới nhất là của ngày **D−1**. Vậy giá trị mới nhất dùng được cách ngày cần dự báo **2 ngày**: biến lag nhỏ nhất là **lag 2**, không được dùng lag 1. (Bản trước của tài liệu ghi nhầm là dùng được số liệu ngày D. Đã sửa ngày 11/11/2026 trong Giai đoạn 3.)
 
 ---
 
@@ -171,7 +172,25 @@ Lấy từ bảng "CÔNG SUẤT HUY ĐỘNG …" trong bài. Mỗi nguồn có h
 
 Các ô thiếu để trống (NaN), không tự điền.
 
-### 3.3. Số liệu nghi có lỗi trong bài gốc (đánh dấu bằng `qc_energy_diff`)
+### 3.3. Số liệu nghi có lỗi trong bài gốc
+
+**a) Số liệu trùng y hệt ngày kề: cờ `qc_same_as_adjacent` (14 ngày, phát hiện ở Giai đoạn 3)**
+
+7 cặp ngày liền nhau có Pmax, giờ Pmax, sản lượng, cơ cấu nguồn và bảng công suất **giống nhau đến từng chữ số**. Hai ngày vận hành khác nhau không thể trùng như vậy: EVN đã đăng số liệu của một ngày cho cả hai bài. **Chỉ một trong hai ngày là đúng**, và bài gốc không cho biết ngày nào.
+
+| Cặp ngày | Thứ | Pmax (MW) | Gợi ý ngày đúng |
+|---|---|---|---|
+| 05/06 – 06/06/2023 | T2 – T3 | 37 950,3 | Không xác định |
+| 23/08 – 24/08/2024 | T6 – T7 | 42 363,8 | Không xác định |
+| 28/02 – 01/03/2025 | T6 – T7 | 42 260,8 | Không xác định |
+| 04/07 – 05/07/2025 | T6 – T7 | 44 603,0 | Không xác định |
+| 31/12/2025 – 01/01/2026 | T4 – Tết Dương lịch | 35 742,6 | Nhiều khả năng **01/01/2026**: mức này hợp với ngày lễ, còn ngày 31/12 thấp bất thường (EDA câu 7) |
+| 30/01 – 31/01/2026 | T6 – T7 | 43 863,1 | Không xác định |
+| 15/03 – 16/03/2026 | CN – T2 | 48 121,0 | Nhiều khả năng **16/03/2026**: quá cao so với một Chủ nhật |
+
+> **Quy tắc:** khi huấn luyện mô hình, loại cả hai ngày của mỗi cặp (đặt NaN), trừ khi có căn cứ chọn được ngày đúng.
+
+**b) Tổng các nguồn không khớp tổng sản lượng: cột `qc_energy_diff`**
 
 | Ngày | `qc_energy_diff` | Nhận định |
 |---|---|---|

@@ -3,3 +3,6 @@ beautifulsoup4==4.12.3
 lxml==6.0.2
 pandas==2.2.3
 holidays==0.107
+matplotlib==3.9.2
+statsmodels==0.14.4
+jupyter==1.1.1

@@ -69,16 +69,22 @@ Lịch lễ/Tết ──► calendar_features.py──────────�
 - [ ] Còn mở: trọng số miền 0,45/0,10/0,45 là giả định, cần thay bằng số liệu chính thức nếu có.
 - [ ] Còn mở (quyết định ở Giai đoạn 4): xử lý giai đoạn thiếu `fc_` trước 20/01/2024: huấn luyện từ 2024, hay dùng `obs_` thay thế cho giai đoạn đầu.
 
-### Giai đoạn 3: Phân tích khám phá (EDA)
-- [ ] Xu hướng, mùa vụ theo tuần và theo tháng.
-- [ ] Quan hệ giữa phụ tải và nhiệt độ.
-- [ ] Ảnh hưởng của lễ, Tết và các đợt nắng nóng.
-- [ ] Giờ xảy ra Pmax dịch chuyển thế nào theo mùa (ảnh hưởng của điện mặt trời mái nhà).
+### Giai đoạn 3: Phân tích khám phá (EDA) hoàn thành (11/11/2026)
+Mã nguồn `notebooks/01_eda.ipynb`, biểu đồ `reports/figures/`, báo cáo **`docs/EDA.md`**.
+- [x] Xu hướng: tăng khoảng 7,5%/năm, không đều giữa các năm (2025 chậm, 2026 nhanh).
+- [x] Mùa vụ theo tuần: CN −13%, T7 −5% (Pmax); T2 sản lượng −2%.
+- [x] Lễ: −22% trung bình. Tết: đáy −45 đến −49%, kéo dài khoảng 3 tuần, hình dạng lặp lại qua 3 năm.
+- [x] Nhiệt độ: phi tuyến, tăng mạnh khi Tmax trên 30°C. Trọng số miền giả định chưa phù hợp.
+- [x] Tự tương quan: lag 7 mạnh hơn lag 2. Lag 1 không dùng được (khoảng cách dự báo 2 ngày).
+- [x] Giờ Pmax: mùa đông buổi tối, mùa hè buổi chiều. Không đổi sau khi tách điện mặt trời mái nhà.
+- [x] Ngày bất thường: nắng nóng, mưa lớn, ngày kề lễ. **Phát hiện 7 cặp ngày EVN đăng trùng số liệu** → thêm cờ `qc_same_as_adjacent`.
+- [x] Baseline (12 tháng gần nhất): MAPE Pmax 5,63%, sản lượng 6,44%. Lễ/Tết sai 24–28%.
+- [x] Sửa nhận định sai trong `Data.md`: biến lag nhỏ nhất là lag 2, không phải lag 1.
 
 ### Giai đoạn 4: Mô hình
 | Bậc | Mô hình | Vai trò |
 |---|---|---|
-| Baseline | Naive (hôm qua), seasonal naive (cùng thứ tuần trước) | Mốc so sánh |
+| Baseline | Lag 2 (số liệu mới nhất có được), TB 4 tuần cùng thứ (lag 7, 14, 21, 28) | Mốc so sánh (đã tính ở EDA câu 8) |
 | Thống kê | SARIMAX có biến nhiệt độ | Dễ giải thích |
 | Machine learning | LightGBM với các biến lag (t-1, t-7), rolling mean, thời tiết, lịch | Mô hình chính dự kiến |
 
