@@ -19,6 +19,58 @@ Trên tập test (11/11/2025 → 10/11/2026, 329 ngày dùng để so sánh):
 
 ---
 
+## Đọc kết quả thế nào (giải thích dễ hiểu)
+
+### MAPE 2,1% nghĩa là gì?
+
+**MAPE** (Mean Absolute Percentage Error) là **sai số phần trăm trung bình**: trung bình mỗi ngày, dự báo lệch khỏi thực tế bao nhiêu phần trăm.
+
+> **MAPE 2,1% = sai số trung bình khoảng 2%, tức là độ chính xác khoảng 98%.**
+>
+> MAPE càng **nhỏ** càng tốt. Không nên đọc "2%" là "độ chính xác 2%".
+
+### Quy ra con số cụ thể
+
+| | Pmax | Sản lượng |
+|---|---|---|
+| Giá trị thực tế trung bình trên tập test | 47 889 MW | 973 triệu kWh |
+| Sai số trung bình mỗi ngày (MAE) | **~1 000 MW** | **~20 triệu kWh** |
+| Sai số của một ngày "điển hình" (trung vị) | ~755 MW (1,6%) | ~16 triệu kWh (1,7%) |
+| 9/10 ngày có sai số không quá | 2 283 MW (4,5%) | 41 triệu kWh (4,1%) |
+
+**Ví dụ:** một ngày có Pmax thực tế khoảng 48 000 MW thì dự báo thường nằm trong khoảng **47 000 – 49 000 MW**.
+
+### Bao nhiêu ngày dự báo "sát"?
+
+Tỉ lệ số ngày (trong 329 ngày test) có sai số nhỏ hơn mức cho trước:
+
+| Sai số nhỏ hơn | Pmax: mô hình | Pmax: baseline | Sản lượng: mô hình | Sản lượng: baseline |
+|---|---|---|---|---|
+| 1% | 35,0% | 22,8% | 35,0% | 19,5% |
+| 2% | **60,2%** | 42,6% | **59,0%** | 36,2% |
+| 3% | **76,6%** | 59,0% | **77,2%** | 46,5% |
+| 5% | **93,9%** | 71,7% | **94,5%** | 63,8% |
+
+Đọc bảng: với Pmax, **gần 94% số ngày** mô hình dự báo lệch dưới 5%. Baseline chỉ đạt mức này ở khoảng 72% số ngày. Những ngày sai trên 5% (khoảng 6%) chủ yếu rơi vào **ngày nghỉ bù, kỳ nghỉ lễ và quanh Tết** (mục 10).
+
+### So với các cách dự báo đơn giản
+
+| Cách dự báo Pmax | Sai số (MAPE) | Độ chính xác tương đương |
+|---|---|---|
+| Lấy số liệu 2 ngày trước (số liệu mới nhất có được) | 7,1% | ~93% |
+| Trung bình 4 ngày cùng thứ của 4 tuần trước (baseline) | 5,1% | ~95% |
+| **Mô hình của dự án** | **2,1%** | **~98%** |
+
+Mô hình giảm sai số khoảng **2,4 lần** so với baseline. Nói cách khác, cứ 100 MW sai số của baseline thì mô hình chỉ còn khoảng 41 MW.
+
+### Kết quả này tốt đến mức nào?
+
+- **So với baseline:** tốt hơn rõ rệt, và đã kiểm định thống kê (mục 7): không phải do may mắn.
+- **So với thực tế ngành:** dự báo phụ tải ngày tới cấp quốc gia thường được nhắc đến với MAPE khoảng 1,5–3%. Đây là nhận định tham khảo chung, **chưa dẫn nguồn cụ thể**. Nếu dùng trong báo cáo chính thức, cần bổ sung trích dẫn (bài báo khoa học hoặc báo cáo của đơn vị điều độ).
+- **Giới hạn:** mô hình chỉ có thông tin đến 2 ngày trước và nhiệt độ dự báo. Không biết các sự kiện bất ngờ (bão, sự cố, cắt điện), nên những ngày như vậy vẫn có thể sai nhiều.
+
+---
+
 ## 1. Bài toán
 
 - **Dự báo ngày tới:** dự báo cho ngày D+1 được lập trong ngày D, sau khi EVN đăng số liệu ngày D−1 (khoảng 11h). Vì vậy mọi đặc trưng lấy từ số liệu EVN đều có **độ trễ ≥ 2 ngày** (`MIN_LAG = 2`).
@@ -218,7 +270,7 @@ Tỉ lệ đóng góp (gain) của LightGBM theo nhóm đặc trưng, mô hình 
 
 ## 10. Phân tích ngày sai nhiều
 
-Pmax, mô hình cuối: **6,4%** số ngày sai quá 5%. Sai số trung bình có dấu −0,41%, tức mô hình hơi thiên về dự báo thấp.
+Pmax, mô hình cuối: **6,1%** số ngày (trên 329 ngày so sánh) sai quá 5%. Sai số trung bình có dấu khoảng −0,4%, tức mô hình hơi thiên về dự báo thấp.
 
 | Ngày | Thực tế (MW) | Dự báo | Sai số | Nguyên nhân |
 |---|---|---|---|---|
