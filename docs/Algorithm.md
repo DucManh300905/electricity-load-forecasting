@@ -94,11 +94,9 @@ Cần ít nhất 2 ngày hợp lệ; nếu không thì ngày đó không đượ
 
 ## 3. Bước 2: Biến mục tiêu dạng tỉ lệ
 
-$$
-\underbrace{\;r(t) = \frac{y(t)}{\text{base}(t)}\;}_{\text{khi huấn luyện}}
-\qquad\qquad
-\underbrace{\;\hat{y}(t) = \hat{r}(t) \times \text{base}(t)\;}_{\text{khi dự báo}}
-$$
+| Khi huấn luyện: tính tỉ lệ thực tế | Khi dự báo: đổi tỉ lệ về MW |
+|:---:|:---:|
+| $r(t) = \dfrac{y(t)}{\text{base}(t)}$ | $\hat{y}(t) = \hat{r}(t) \times \text{base}(t)$ |
 
 | $r$ | Nghĩa |
 |---|---|
@@ -124,7 +122,7 @@ Mỗi ngày cần dự báo được mô tả bằng **27 con số**. Mọi số
 | `is_pre_day_off`, `is_post_day_off` | Ngày làm việc ngay trước / ngay sau kỳ nghỉ |
 | `is_makeup_workday` | Thứ Bảy/CN phải đi làm bù |
 | `tet_offset` | Số ngày so với Mùng 1 Tết, giữ trong khoảng $[-10, 15]$; ngoài khoảng gán $99$ |
-| `doy_sin`, `doy_cos` | $\sin\!\left(\dfrac{2\pi \cdot \text{ngày trong năm}}{365{,}25}\right)$, $\cos(\cdot)$: vị trí trong năm dạng vòng tròn, để 31/12 và 01/01 nằm cạnh nhau |
+| `doy_sin`, `doy_cos` | $\sin\!\left(\dfrac{2\pi \cdot \text{doy}}{365{,}25}\right)$ và $\cos\!\left(\dfrac{2\pi \cdot \text{doy}}{365{,}25}\right)$, với doy là thứ tự ngày trong năm (1–366). Biểu diễn vị trí trong năm dạng vòng tròn, để 31/12 và 01/01 nằm cạnh nhau |
 
 ### 4.2. Độ lệch gần đây (từ số liệu EVN)
 
@@ -158,11 +156,12 @@ Ký hiệu $T^{\text{fc}}_{\text{m}}(t)$ là Tmax **dự báo** của ngày $t$,
 Tỉ lệ dự báo bằng một hằng số cộng **tổng có trọng số** của các đặc trưng:
 
 $$
-\hat{r} \;=\; \beta_0 + \sum_{j=1}^{p} \beta_j \, z_j
-\qquad\text{với}\qquad
+\hat{r} \;=\; \beta_0 + \sum_{j=1}^{p} \beta_j \, z_j,
+\qquad\qquad
 z_j = \frac{x_j - \mu_j}{\sigma_j}
 $$
 
+- $p$: số đặc trưng; $x_j$: giá trị gốc của đặc trưng $j$; $z_j$: giá trị đã chuẩn hóa.
 - $\mu_j$, $\sigma_j$: trung bình và độ lệch chuẩn của đặc trưng $j$ trên tập huấn luyện. Chuẩn hóa giúp các hệ số $\beta_j$ so sánh được với nhau dù đặc trưng có đơn vị khác nhau (°C, số ngày, tỉ lệ).
 - Tích $\beta_j z_j$ là **đóng góp** của đặc trưng $j$ vào dự báo.
 
@@ -172,10 +171,13 @@ Ridge chọn các hệ số $\beta$ làm nhỏ nhất:
 
 $$
 \min_{\beta}\;
-\underbrace{\sum_{i=1}^{n} \left(r_i - \hat{r}_i\right)^2}_{\text{sai số trên tập huấn luyện}}
+\underbrace{\sum_{i=1}^{n} \left(r_i - \hat{r}_i\right)^2}_{(1)}
 \;+\;
-\underbrace{\alpha \sum_{j=1}^{p} \beta_j^2}_{\text{phạt hệ số lớn}}
+\underbrace{\alpha \sum_{j=1}^{p} \beta_j^2}_{(2)}
 $$
+
+- **(1)** Sai số trên tập huấn luyện ($n$ ngày): càng nhỏ càng khớp dữ liệu.
+- **(2)** Phần phạt: hệ số càng lớn thì bị phạt càng nặng. $\alpha$ điều chỉnh mức phạt.
 
 Bài toán có **nghiệm đóng**:
 
@@ -218,7 +220,7 @@ LightGBM xây **600 cây quyết định nhỏ nối tiếp nhau**. Mỗi cây s
 
 $$
 \begin{aligned}
-F_0 &= \text{giá trị khởi đầu} \;\approx\; \text{tỉ lệ điển hình của tập huấn luyện} \;(\approx 0{,}99) \\[4pt]
+F_0 &\approx 0{,}99 \\[4pt]
 F_m(x) &= F_{m-1}(x) + \eta \cdot h_m(x), \qquad m = 1, 2, \dots, M \\[4pt]
 \hat{r} &= F_M(x)
 \end{aligned}
@@ -226,6 +228,8 @@ $$
 
 | Ký hiệu | Ý nghĩa | Giá trị |
 |---|---|---|
+| $F_0$ | Giá trị khởi đầu: tỉ lệ điển hình của tập huấn luyện | ≈ 0,99 |
+| $F_m$ | Dự báo sau khi đã cộng $m$ cây | |
 | $h_m$ | Cây thứ $m$, mỗi lá chứa một con số điều chỉnh | tối đa **15 lá** |
 | $\eta$ | Tốc độ học: mỗi cây chỉ sửa một phần nhỏ sai số | **0,03** |
 | $M$ | Số cây | Pmax **600**, sản lượng **300** |
@@ -270,12 +274,10 @@ $\phi_0$ là giá trị gốc (dự báo khi chưa biết gì về ngày đó). 
 
 ## 7. Bước 4: Kết hợp và đổi về MW
 
-$$
-\begin{aligned}
-\textbf{Pmax:}\qquad &\hat{r} = \frac{\hat{r}_{\text{Ridge}} + \hat{r}_{\text{LightGBM}}}{2}, &\qquad \hat{y} &= \hat{r} \times \text{base} \\[8pt]
-\textbf{Sản lượng:}\qquad &\hat{r} = \hat{r}_{\text{Ridge}}, &\qquad \hat{y} &= \hat{r} \times \text{base}
-\end{aligned}
-$$
+| Biến | Tỉ lệ dự báo | Dự báo |
+|---|:---:|:---:|
+| **Pmax** | $\hat{r} = \dfrac{\hat{r}_{\text{Ridge}} + \hat{r}_{\text{LightGBM}}}{2}$ | $\hat{y} = \hat{r} \times \text{base}$ |
+| **Sản lượng** | $\hat{r} = \hat{r}_{\text{Ridge}}$ | $\hat{y} = \hat{r} \times \text{base}$ |
 
 **Vì sao lấy trung bình lại tốt hơn?** Hai mô hình **sai theo kiểu khác nhau**: Ridge tốt ở lễ/Tết, LightGBM tốt ở ngày nắng nóng. Khi một mô hình sai lệch, mô hình kia thường kéo lại.
 
@@ -327,7 +329,7 @@ Ngày gần nhất có số liệu thấp hơn bình thường khoảng 1,5%.
 $$
 \begin{aligned}
 \texttt{hot\_hn} &= \max(0,\; 36{,}7 - 30) &&= 6{,}7 \\[6pt]
-\texttt{dtmax\_hn} &= 36{,}7 - \frac{33{,}9 + 30{,}4 + 35{,}0 + 36{,}7}{4} = 36{,}7 - 34{,}0 &&= +2{,}7\,^{\circ}\text{C} \\[6pt]
+\texttt{dtmax\_hn} &= 36{,}7 - \frac{33{,}9 + 30{,}4 + 35{,}0 + 36{,}7}{4} = 36{,}7 - 34{,}0 &&= +2{,}7\,{}^{\circ}\text{C} \\[6pt]
 \texttt{dhot\_hn} &= 6{,}7 - \frac{3{,}9 + 0{,}4 + 5{,}0 + 6{,}7}{4} = 6{,}7 - 4{,}0 &&= +2{,}7
 \end{aligned}
 $$
@@ -367,7 +369,7 @@ Nghĩa là: riêng việc Hà Nội nóng hơn ngày tham chiếu đã đẩy d�
 | **Tổng** | $\mathbf{+0{,}0250}$ |
 
 $$
-\hat{r}_{\text{Ridge}} = \underbrace{0{,}99030}_{\beta_0} + \underbrace{0{,}02500}_{\text{tổng đóng góp}} = 1{,}01530
+\hat{r}_{\text{Ridge}} = \underbrace{0{,}99030}_{\beta_0} + \underbrace{0{,}02500}_{\sum_j \beta_j z_j} = 1{,}01530
 \qquad\Longrightarrow\qquad
 1{,}01530 \times 53\,181{,}2 = 53\,995{,}1 \text{ MW}
 $$
@@ -412,9 +414,11 @@ $$
 \begin{aligned}
 \hat{r} &= \frac{1{,}01530 + 1{,}06188}{2} = 1{,}03859 \\[6pt]
 \hat{y} &= 1{,}03859 \times 53\,181{,}2 = \boxed{55\,233{,}5 \text{ MW}} \\[6pt]
-\text{Sai số} &= \frac{55\,233{,}5 - 57\,536{,}7}{57\,536{,}7} = -4{,}0\%
+e &= \frac{\hat{y} - y}{y} = \frac{55\,233{,}5 - 57\,536{,}7}{57\,536{,}7} = -4{,}0\%
 \end{aligned}
 $$
+
+($e$ là sai số tương đối: âm nghĩa là dự báo thấp hơn thực tế.)
 
 | Cách dự báo | Dự báo (MW) | Thực tế (MW) | Sai số |
 |---|---|---|---|
@@ -502,9 +506,11 @@ $$
 \begin{aligned}
 \hat{r} &= \frac{0{,}7782 + 0{,}7619}{2} = 0{,}7701 \\[6pt]
 \hat{y} &= 0{,}7701 \times 51\,302{,}9 = \boxed{39\,506{,}7 \text{ MW}} \\[6pt]
-\text{Sai số} &= \frac{39\,506{,}7 - 37\,835{,}0}{37\,835{,}0} = +4{,}4\%
+e &= \frac{\hat{y} - y}{y} = \frac{39\,506{,}7 - 37\,835{,}0}{37\,835{,}0} = +4{,}4\%
 \end{aligned}
 $$
+
+(Dương nghĩa là dự báo cao hơn thực tế.)
 
 | Cách dự báo | Dự báo (MW) | Thực tế (MW) | Sai số |
 |---|---|---|---|
@@ -523,8 +529,12 @@ $$
 Mô hình **không được huấn luyện một lần rồi dùng mãi**. Backtest **huấn luyện lại vào đầu mỗi tháng**, chỉ bằng dữ liệu đã có tại thời điểm đó:
 
 $$
-\text{Tập huấn luyện cho tháng } M \;=\; \Big\{\, \text{các ngày } d \;:\; 01/07/2023 \;\le\; d \;\le\; (\text{ngày đầu tháng } M) - 2 \,\Big\}
+\mathcal{T}_M \;=\; \big\{\, d \;:\; d_{\text{start}} \;\le\; d \;\le\; d_M - 2 \,\big\}
 $$
+
+- $\mathcal{T}_M$: tập các ngày dùng để huấn luyện mô hình dự báo cho tháng $M$.
+- $d_{\text{start}}$ = 01/07/2023: ngày bắt đầu dữ liệu huấn luyện.
+- $d_M$: ngày đầu tiên của tháng $M$; trừ 2 ngày vì độ trễ công bố số liệu.
 
 ```mermaid
 gantt
@@ -648,10 +658,13 @@ Mô hình phân vị dùng **hàm mất mát pinball** thay cho L1/L2:
 $$
 L_{\tau}(y, q) =
 \begin{cases}
-\tau \,(y - q) & \text{nếu } y \ge q \quad \text{(dự báo thấp hơn thực tế)} \\[4pt]
-(1 - \tau)\,(q - y) & \text{nếu } y < q \quad \text{(dự báo cao hơn thực tế)}
+\tau \,(y - q), & y \ge q \\[4pt]
+(1 - \tau)\,(q - y), & y < q
 \end{cases}
 $$
+
+- $q$: giá trị phân vị mà mô hình dự báo; $\tau$: mức phân vị (0,1 hoặc 0,9).
+- Dòng trên ($y \ge q$): dự báo **thấp hơn** thực tế. Dòng dưới ($y < q$): dự báo **cao hơn** thực tế.
 
 Với $\tau = 0{,}9$: dự báo thấp hơn thực tế bị phạt **nặng gấp 9 lần** dự báo cao hơn ($0{,}9$ so với $0{,}1$). Mô hình vì vậy đẩy $q$ lên cao, sao cho chỉ khoảng 10% số ngày vượt $q$.
 
