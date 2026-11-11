@@ -67,7 +67,8 @@ python train.py        # huấn luyện + backtest → data/backtest*.csv, model
     ├── Projects.md         # kế hoạch dự án
     ├── Data.md             # từ điển dữ liệu
     ├── EDA.md              # báo cáo phân tích khám phá
-    └── Model.md            # báo cáo mô hình
+    ├── Model.md            # báo cáo mô hình
+    └── Algorithm.md        # cách mô hình hoạt động, kèm ví dụ tính tay
 ```
 
 ## Ghi chú
