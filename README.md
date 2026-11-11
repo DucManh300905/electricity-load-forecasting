@@ -6,11 +6,11 @@ Dự báo công suất lớn nhất (Pmax) và sản lượng điện của Hệ
 
 | Giai đoạn | Nội dung | Trạng thái |
 |---|---|---|
-| 1 | Thu thập và chuẩn hóa dữ liệu EVN | ✅ Hoàn thành: 314 ngày (01/01 → 10/11/2026) |
-| 2 | Dữ liệu thời tiết và lịch lễ, Tết | ⏳ Chưa bắt đầu |
-| 3 | Phân tích khám phá (EDA) | ⏳ |
-| 4 | Mô hình dự báo | ⏳ |
-| 5 | Vận hành hằng ngày và dashboard | ⏳ |
+| 1 | Thu thập và chuẩn hóa dữ liệu EVN | Hoàn thành: 314 ngày (01/01 → 10/11/2026) |
+| 2 | Dữ liệu thời tiết và lịch lễ, Tết | Chưa bắt đầu |
+| 3 | Phân tích khám phá (EDA) |  |
+| 4 | Mô hình dự báo |  |
+| 5 | Vận hành hằng ngày và dashboard |  |
 
 Kế hoạch chi tiết: [docs/Projects.md](docs/Projects.md)
 
