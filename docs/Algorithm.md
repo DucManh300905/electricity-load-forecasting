@@ -60,8 +60,8 @@ flowchart LR
 
 | Biến mục tiêu | Mô hình cuối | Tỉ lệ dự báo |
 |---|---|---|
-| Pmax | **Ensemble** | $\hat{r} = \tfrac{1}{2}\left(\hat{r}_{\text{Ridge}} + \hat{r}_{\text{LightGBM}}\right)$ |
-| Sản lượng | **Ridge** | $\hat{r} = \hat{r}_{\text{Ridge}}$ |
+| Pmax | **Ensemble** | $\hat{r} = \tfrac{1}{2}\left(\hat r_{\text{Ridge}} + \hat r_{\text{LightGBM}}\right)$ |
+| Sản lượng | **Ridge** | $\hat{r} = \hat r_{\text{Ridge}}$ |
 
 > **Ý tưởng chính:** mô hình không dự báo trực tiếp MW, mà trả lời câu hỏi *"ngày mai sẽ cao hơn hay thấp hơn mức bình thường bao nhiêu phần trăm?"*
 
@@ -72,10 +72,10 @@ flowchart LR
 ### Công thức
 
 $$
-\text{base}(t) \;=\; \frac{1}{4} \sum_{k \,\in\, K_t} y(t - 7k)
+\text{base}(t) \enspace =\enspace  \frac{1}{4} \sum_{k \thinspace \in\thinspace  K_t} y(t - 7k)
 $$
 
-trong đó $K_t$ là **4 giá trị $k$ nhỏ nhất** trong $\{1, 2, \dots, 8\}$ sao cho ngày $t-7k$:
+trong đó $K_t$ là **4 giá trị $k$ nhỏ nhất** trong $\lbrace 1, 2, \dots, 8\rbrace $ sao cho ngày $t-7k$:
 
 - ✔ có số liệu (không thiếu, không bị cờ lỗi `qc_same_as_adjacent`),
 - ✔ **không** phải ngày lễ, và **không** nằm trong ±10 ngày quanh Mùng 1 Tết.
@@ -122,7 +122,7 @@ Mỗi ngày cần dự báo được mô tả bằng **27 con số**. Mọi số
 | `is_pre_day_off`, `is_post_day_off` | Ngày làm việc ngay trước / ngay sau kỳ nghỉ |
 | `is_makeup_workday` | Thứ Bảy/CN phải đi làm bù |
 | `tet_offset` | Số ngày so với Mùng 1 Tết, giữ trong khoảng $[-10, 15]$; ngoài khoảng gán $99$ |
-| `doy_sin`, `doy_cos` | $\sin\!\left(\dfrac{2\pi \cdot \text{doy}}{365{,}25}\right)$ và $\cos\!\left(\dfrac{2\pi \cdot \text{doy}}{365{,}25}\right)$, với doy là thứ tự ngày trong năm (1–366). Biểu diễn vị trí trong năm dạng vòng tròn, để 31/12 và 01/01 nằm cạnh nhau |
+| `doy_sin`, `doy_cos` | $\sin\left(\dfrac{2\pi \cdot \text{doy}}{365{,}25}\right)$ và $\cos\left(\dfrac{2\pi \cdot \text{doy}}{365{,}25}\right)$, với doy là thứ tự ngày trong năm (1–366). Biểu diễn vị trí trong năm dạng vòng tròn, để 31/12 và 01/01 nằm cạnh nhau |
 
 ### 4.2. Độ lệch gần đây (từ số liệu EVN)
 
@@ -132,16 +132,16 @@ Mỗi ngày cần dự báo được mô tả bằng **27 con số**. Mọi số
 | `ratio_mean_2_8` | $\dfrac{1}{7}\displaystyle\sum_{k=2}^{8} r(t-k)$ | Xu hướng của tuần gần nhất (chỉ tính ngày thường) |
 | `base_growth_4w` | $\dfrac{\text{base}(t)}{\text{base}(t-28)} - 1$ | Mức nền đang tăng nhanh hay chậm |
 
-### 4.3. Nhiệt độ dự báo, cho mỗi miền $\text{m} \in \{\text{hn}, \text{dn}, \text{hcm}\}$
+### 4.3. Nhiệt độ dự báo, cho mỗi miền $\text{m} \in \lbrace \text{hn}, \text{dn}, \text{hcm}\rbrace $
 
-Ký hiệu $T^{\text{fc}}_{\text{m}}(t)$ là Tmax **dự báo** của ngày $t$, $T^{\text{obs}}_{\text{m}}$ là Tmax **thực tế** của ngày tham chiếu, và $K_t$ là 4 ngày tham chiếu của baseline (mục 2).
+Ký hiệu $T_{\mathrm{m}}^{\mathrm{fc}}(t)$ là Tmax **dự báo** của ngày $t$, $T_{\mathrm{m}}^{\mathrm{obs}}$ là Tmax **thực tế** của ngày tham chiếu, $K_t$ là 4 ngày tham chiếu của baseline (mục 2), và $H_{\mathrm{m}}(t)$ là giá trị của `hot_m`.
 
 | Đặc trưng | Công thức |
 |---|---|
 | `fc_tmax_m`, `fc_tmean_m` | Nhiệt độ cao nhất / trung bình **dự báo** của ngày $t$ |
-| `hot_m` | $\max\!\left(0,\; T^{\text{fc}}_{\text{m}}(t) - 30\right)$ |
-| `dtmax_m` | $T^{\text{fc}}_{\text{m}}(t) \;-\; \dfrac{1}{4}\displaystyle\sum_{k \in K_t} T^{\text{obs}}_{\text{m}}(t-7k)$ |
-| `dhot_m` | $\texttt{hot\_m}(t) \;-\; \dfrac{1}{4}\displaystyle\sum_{k \in K_t} \max\!\left(0,\; T^{\text{obs}}_{\text{m}}(t-7k) - 30\right)$ |
+| `hot_m` | $\max\left(0,\enspace  T_{\mathrm{m}}^{\mathrm{fc}}(t) - 30\right)$ |
+| `dtmax_m` | $T_{\mathrm{m}}^{\mathrm{fc}}(t) \enspace -\enspace  \dfrac{1}{4}\displaystyle\sum_{k \in K_t} T_{\mathrm{m}}^{\mathrm{obs}}(t-7k)$ |
+| `dhot_m` | $H_{\mathrm{m}}(t) \enspace -\enspace  \dfrac{1}{4}\displaystyle\sum_{k \in K_t} \max\left(0,\enspace  T_{\mathrm{m}}^{\mathrm{obs}}(t-7k) - 30\right)$ |
 
 > **Vì sao ngưỡng 30°C?** EDA (câu 4) cho thấy phụ tải gần như không đổi khi Tmax dưới 30°C, và tăng mạnh khi vượt 30°C.
 >
@@ -156,7 +156,7 @@ Ký hiệu $T^{\text{fc}}_{\text{m}}(t)$ là Tmax **dự báo** của ngày $t$,
 Tỉ lệ dự báo bằng một hằng số cộng **tổng có trọng số** của các đặc trưng:
 
 $$
-\hat{r} \;=\; \beta_0 + \sum_{j=1}^{p} \beta_j \, z_j,
+\hat{r} \enspace =\enspace  \beta_0 + \sum_{j=1}^{p} \beta_j \thinspace  z_j,
 \qquad\qquad
 z_j = \frac{x_j - \mu_j}{\sigma_j}
 $$
@@ -170,10 +170,10 @@ $$
 Ridge chọn các hệ số $\beta$ làm nhỏ nhất:
 
 $$
-\min_{\beta}\;
-\underbrace{\sum_{i=1}^{n} \left(r_i - \hat{r}_i\right)^2}_{(1)}
-\;+\;
-\underbrace{\alpha \sum_{j=1}^{p} \beta_j^2}_{(2)}
+\min_{\beta}\enspace 
+\overbrace{\sum_{i=1}^{n} \left(r_i - \hat r_i\right)^2}^{(1)}
+\enspace +\enspace 
+\overbrace{\alpha \sum_{j=1}^{p} \beta_j^2}^{(2)}
 $$
 
 - **(1)** Sai số trên tập huấn luyện ($n$ ngày): càng nhỏ càng khớp dữ liệu.
@@ -220,8 +220,8 @@ LightGBM xây **600 cây quyết định nhỏ nối tiếp nhau**. Mỗi cây s
 
 $$
 \begin{aligned}
-F_0 &\approx 0{,}99 \\[4pt]
-F_m(x) &= F_{m-1}(x) + \eta \cdot h_m(x), \qquad m = 1, 2, \dots, M \\[4pt]
+F_0 &\approx 0{,}99 \cr 
+F_m(x) &= F_{m-1}(x) + \eta \cdot h_m(x), \qquad m = 1, 2, \dots, M \cr 
 \hat{r} &= F_M(x)
 \end{aligned}
 $$
@@ -240,8 +240,8 @@ $$
 
 | Hàm mất mát | Dùng cho | Phần sai còn lại $g_i$ | Giá trị tại mỗi lá |
 |---|---|---|---|
-| L2: $\;(r - F)^2$ | Sản lượng | $r_i - F_{m-1}(x_i)$ | **trung bình** phần sai của các ngày rơi vào lá |
-| L1: $\;\lvert r - F \rvert$ | **Pmax** | $\operatorname{sign}\!\left(r_i - F_{m-1}(x_i)\right) = \pm 1$ | **trung vị** phần sai của các ngày rơi vào lá |
+| L2: $\enspace (r - F)^2$ | Sản lượng | $r_i - F_{m-1}(x_i)$ | **trung bình** phần sai của các ngày rơi vào lá |
+| L1: $\enspace \lvert r - F \rvert$ | **Pmax** | $\mathrm{sign}\left(r_i - F_{m-1}(x_i)\right) = \pm 1$ | **trung vị** phần sai của các ngày rơi vào lá |
 
 Cây được dựng sao cho các ngày có phần sai giống nhau rơi vào cùng một lá. Hàm **L1** (chọn cho Pmax) dùng trung vị nên **ít bị kéo lệch bởi ngày bất thường** hơn L2.
 
@@ -257,7 +257,7 @@ Cây được dựng sao cho các ngày có phần sai giống nhau rơi vào c�
 Dự báo của LightGBM được tách thành đóng góp của từng đặc trưng (giá trị SHAP, có sẵn trong LightGBM):
 
 $$
-\hat{r} \;=\; \phi_0 \;+\; \sum_{j=1}^{p} \phi_j
+\hat{r} \enspace =\enspace  \phi_0 \enspace +\enspace  \sum_{j=1}^{p} \phi_j
 $$
 
 $\phi_0$ là giá trị gốc (dự báo khi chưa biết gì về ngày đó). $\phi_j > 0$: đặc trưng $j$ **đẩy dự báo lên**; $\phi_j < 0$: **kéo xuống**.
@@ -276,8 +276,8 @@ $\phi_0$ là giá trị gốc (dự báo khi chưa biết gì về ngày đó). 
 
 | Biến | Tỉ lệ dự báo | Dự báo |
 |---|:---:|:---:|
-| **Pmax** | $\hat{r} = \dfrac{\hat{r}_{\text{Ridge}} + \hat{r}_{\text{LightGBM}}}{2}$ | $\hat{y} = \hat{r} \times \text{base}$ |
-| **Sản lượng** | $\hat{r} = \hat{r}_{\text{Ridge}}$ | $\hat{y} = \hat{r} \times \text{base}$ |
+| **Pmax** | $\hat{r} = \dfrac{\hat r_{\text{Ridge}} + \hat r_{\text{LightGBM}}}{2}$ | $\hat{y} = \hat{r} \times \text{base}$ |
+| **Sản lượng** | $\hat{r} = \hat r_{\text{Ridge}}$ | $\hat{y} = \hat{r} \times \text{base}$ |
 
 **Vì sao lấy trung bình lại tốt hơn?** Hai mô hình **sai theo kiểu khác nhau**: Ridge tốt ở lễ/Tết, LightGBM tốt ở ngày nắng nóng. Khi một mô hình sai lệch, mô hình kia thường kéo lại.
 
@@ -306,9 +306,9 @@ $\phi_0$ là giá trị gốc (dự báo khi chưa biết gì về ngày đó). 
 $$
 \begin{aligned}
 \text{base}
-&= \frac{53\,119{,}4 + 48\,962{,}3 + 53\,453{,}8 + 57\,189{,}4}{4} \\[6pt]
-&= \frac{212\,724{,}9}{4} \\[6pt]
-&= \boxed{53\,181{,}2 \text{ MW}}
+&= \frac{53\thinspace 119{,}4 + 48\thinspace 962{,}3 + 53\thinspace 453{,}8 + 57\thinspace 189{,}4}{4} \cr 
+&= \frac{212\thinspace 724{,}9}{4} \cr 
+&= \boxed{53\thinspace 181{,}2 \text{ MW}}
 \end{aligned}
 $$
 
@@ -316,21 +316,21 @@ Không tuần nào có lễ, nên ở đây baseline sạch trùng với baselin
 
 ### Bước 2: Đặc trưng
 
-**Độ lệch gần đây:**
+**Độ lệch gần đây** (`ratio_lag2`):
 
 $$
-\texttt{ratio\_lag2} = \frac{y(22/06)}{\text{base}(22/06)} = \frac{53\,447{,}8}{54\,292{,}0} = 0{,}9845
+r(t-2) = \frac{y(22/06)}{\text{base}(22/06)} = \frac{53\thinspace 447{,}8}{54\thinspace 292{,}0} = 0{,}9845
 $$
 
 Ngày gần nhất có số liệu thấp hơn bình thường khoảng 1,5%.
 
-**Nhiệt độ ở Hà Nội:** Tmax dự báo $36{,}7$°C; Tmax thực tế của 4 ngày tham chiếu là $33{,}9;\; 30{,}4;\; 35{,}0;\; 36{,}7$°C.
+**Nhiệt độ ở Hà Nội** (ký hiệu $H$ = `hot_hn`, $\Delta T$ = `dtmax_hn`, $\Delta H$ = `dhot_hn`): Tmax dự báo $36{,}7$°C; Tmax thực tế của 4 ngày tham chiếu là $33{,}9;\enspace  30{,}4;\enspace  35{,}0;\enspace  36{,}7$°C.
 
 $$
 \begin{aligned}
-\texttt{hot\_hn} &= \max(0,\; 36{,}7 - 30) &&= 6{,}7 \\[6pt]
-\texttt{dtmax\_hn} &= 36{,}7 - \frac{33{,}9 + 30{,}4 + 35{,}0 + 36{,}7}{4} = 36{,}7 - 34{,}0 &&= +2{,}7\,{}^{\circ}\text{C} \\[6pt]
-\texttt{dhot\_hn} &= 6{,}7 - \frac{3{,}9 + 0{,}4 + 5{,}0 + 6{,}7}{4} = 6{,}7 - 4{,}0 &&= +2{,}7
+H &= \max(0,\enspace  36{,}7 - 30) &&= 6{,}7 \cr 
+\Delta T &= 36{,}7 - \frac{33{,}9 + 30{,}4 + 35{,}0 + 36{,}7}{4} = 36{,}7 - 34{,}0 &&= +2{,}7\thinspace {}^{\circ}\text{C} \cr 
+\Delta H &= 6{,}7 - \frac{3{,}9 + 0{,}4 + 5{,}0 + 6{,}7}{4} = 6{,}7 - 4{,}0 &&= +2{,}7
 \end{aligned}
 $$
 
@@ -369,12 +369,12 @@ Nghĩa là: riêng việc Hà Nội nóng hơn ngày tham chiếu đã đẩy d�
 | **Tổng** | $\mathbf{+0{,}0250}$ |
 
 $$
-\hat{r}_{\text{Ridge}} = \underbrace{0{,}99030}_{\beta_0} + \underbrace{0{,}02500}_{\sum_j \beta_j z_j} = 1{,}01530
+\hat r_{\text{Ridge}} = \overbrace{0{,}99030}^{\beta_0} + \overbrace{0{,}02500}^{\sum_j \beta_j z_j} = 1{,}01530
 \qquad\Longrightarrow\qquad
-1{,}01530 \times 53\,181{,}2 = 53\,995{,}1 \text{ MW}
+1{,}01530 \times 53\thinspace 181{,}2 = 53\thinspace 995{,}1 \text{ MW}
 $$
 
-> **Lưu ý khi đọc hệ số Ridge.** Một vài đặc trưng nhiệt độ có hệ số **âm**: `hot_dn` ($\beta = -0{,}0065$, đóng góp $-0{,}0204$) và `fc_tmax_dn` ($\beta = -0{,}0063$, đóng góp $-0{,}0136$). Điều này nghe có vẻ vô lý (nóng hơn mà phụ tải giảm?). Nguyên nhân là `hot_dn`, `dhot_dn`, `fc_tmax_dn` **tương quan rất mạnh với nhau**, nên mô hình chia ảnh hưởng giữa chúng theo cách khó diễn giải riêng lẻ. **Chỉ nên đọc tổng của cả nhóm**: nhóm nhiệt độ đóng góp $+4{,}3\%$, đúng chiều trực giác.
+> **Lưu ý khi đọc hệ số Ridge.** Một vài đặc trưng nhiệt độ có hệ số **âm**: `hot_dn` ($\beta = -0{,}0065$, đóng góp $-0{,}0204$) và `fc_tmax_dn` ($\beta = -0{,}0063$, đóng góp $-0{,}0136$). Điều này nghe có vẻ vô lý (nóng hơn mà phụ tải giảm?). Nguyên nhân là `hot_dn`, `dhot_dn`, `fc_tmax_dn` **tương quan rất mạnh với nhau**, nên mô hình chia ảnh hưởng giữa chúng theo cách khó diễn giải riêng lẻ. **Chỉ nên đọc tổng của cả nhóm**: nhóm nhiệt độ đóng góp +4,3%, đúng chiều trực giác.
 
 ### Bước 3b: LightGBM
 
@@ -401,24 +401,24 @@ Mỗi cây chỉ nhích dự báo lên một chút (vì $\eta = 0{,}03$); sau kh
 Năm đặc trưng có ảnh hưởng lớn nhất: `fc_tmean_dn` $+0{,}0208$; `fc_tmean_hn` $+0{,}0191$; `base_growth_4w` $-0{,}0179$; `dhot_hn` $+0{,}0137$; `fc_tmax_hn` $+0{,}0095$.
 
 $$
-\hat{r}_{\text{LightGBM}} = \underbrace{0{,}99061}_{\phi_0} + \underbrace{0{,}07127}_{\sum \phi_j} = 1{,}06188
+\hat r_{\text{LightGBM}} = \overbrace{0{,}99061}^{\phi_0} + \overbrace{0{,}07127}^{\sum \phi_j} = 1{,}06188
 \qquad\Longrightarrow\qquad
-1{,}06188 \times 53\,181{,}2 = 56\,472{,}0 \text{ MW}
+1{,}06188 \times 53\thinspace 181{,}2 = 56\thinspace 472{,}0 \text{ MW}
 $$
 
-LightGBM đánh giá ảnh hưởng nắng nóng **mạnh gần gấp đôi** Ridge ($+7{,}9\%$ so với $+4{,}3\%$), vì nó học được quan hệ phi tuyến: càng nóng thì phụ tải tăng càng nhanh.
+LightGBM đánh giá ảnh hưởng nắng nóng **mạnh gần gấp đôi** Ridge (+7,9% so với +4,3%), vì nó học được quan hệ phi tuyến: càng nóng thì phụ tải tăng càng nhanh.
 
 ### Bước 4: Kết hợp và kết quả
 
 $$
 \begin{aligned}
-\hat{r} &= \frac{1{,}01530 + 1{,}06188}{2} = 1{,}03859 \\[6pt]
-\hat{y} &= 1{,}03859 \times 53\,181{,}2 = \boxed{55\,233{,}5 \text{ MW}} \\[6pt]
-e &= \frac{\hat{y} - y}{y} = \frac{55\,233{,}5 - 57\,536{,}7}{57\,536{,}7} = -4{,}0\%
+\hat{r} &= \frac{1{,}01530 + 1{,}06188}{2} = 1{,}03859 \cr 
+\hat{y} &= 1{,}03859 \times 53\thinspace 181{,}2 = \boxed{55\thinspace 233{,}5 \text{ MW}} \cr 
+e &= \frac{\hat{y} - y}{y} = \frac{55\thinspace 233{,}5 - 57\thinspace 536{,}7}{57\thinspace 536{,}7} = -0{,}040
 \end{aligned}
 $$
 
-($e$ là sai số tương đối: âm nghĩa là dự báo thấp hơn thực tế.)
+Sai số tương đối $e = -0{,}040$, tức **−4,0%** (âm nghĩa là dự báo thấp hơn thực tế).
 
 | Cách dự báo | Dự báo (MW) | Thực tế (MW) | Sai số |
 |---|---|---|---|
@@ -447,13 +447,13 @@ $$
 | 05/08/2026 | 4 | 49 166,4 | ✔ |
 
 $$
-\text{base} = \frac{50\,601{,}1 + 49\,310{,}2 + 56\,134{,}0 + 49\,166{,}4}{4} = \frac{205\,211{,}7}{4} = \boxed{51\,302{,}9 \text{ MW}}
+\text{base} = \frac{50\thinspace 601{,}1 + 49\thinspace 310{,}2 + 56\thinspace 134{,}0 + 49\thinspace 166{,}4}{4} = \frac{205\thinspace 211{,}7}{4} = \boxed{51\thinspace 302{,}9 \text{ MW}}
 $$
 
-Đây là mức của một **thứ Tư đi làm bình thường**. Nếu dùng nguyên baseline làm dự báo thì sai:
+Đây là mức của một **thứ Tư đi làm bình thường**. Nếu dùng nguyên baseline làm dự báo thì sai số tương đối là +0,356, tức **+35,6%**:
 
 $$
-\frac{51\,302{,}9 - 37\,835{,}0}{37\,835{,}0} = +35{,}6\%
+\frac{51\thinspace 302{,}9 - 37\thinspace 835{,}0}{37\thinspace 835{,}0} = +0{,}356
 $$
 
 ### Bước 2: Đặc trưng chính
@@ -504,13 +504,13 @@ Các cây đầu chưa phân biệt ngày lễ (dự báo vẫn quanh 1,0). Sau 
 
 $$
 \begin{aligned}
-\hat{r} &= \frac{0{,}7782 + 0{,}7619}{2} = 0{,}7701 \\[6pt]
-\hat{y} &= 0{,}7701 \times 51\,302{,}9 = \boxed{39\,506{,}7 \text{ MW}} \\[6pt]
-e &= \frac{\hat{y} - y}{y} = \frac{39\,506{,}7 - 37\,835{,}0}{37\,835{,}0} = +4{,}4\%
+\hat{r} &= \frac{0{,}7782 + 0{,}7619}{2} = 0{,}7701 \cr 
+\hat{y} &= 0{,}7701 \times 51\thinspace 302{,}9 = \boxed{39\thinspace 506{,}7 \text{ MW}} \cr 
+e &= \frac{\hat{y} - y}{y} = \frac{39\thinspace 506{,}7 - 37\thinspace 835{,}0}{37\thinspace 835{,}0} = +0{,}044
 \end{aligned}
 $$
 
-(Dương nghĩa là dự báo cao hơn thực tế.)
+Sai số tương đối $e = +0{,}044$, tức **+4,4%** (dương nghĩa là dự báo cao hơn thực tế).
 
 | Cách dự báo | Dự báo (MW) | Thực tế (MW) | Sai số |
 |---|---|---|---|
@@ -529,10 +529,10 @@ $$
 Mô hình **không được huấn luyện một lần rồi dùng mãi**. Backtest **huấn luyện lại vào đầu mỗi tháng**, chỉ bằng dữ liệu đã có tại thời điểm đó:
 
 $$
-\mathcal{T}_M \;=\; \big\{\, d \;:\; d_{\text{start}} \;\le\; d \;\le\; d_M - 2 \,\big\}
+\mathcal T_M \enspace =\enspace  \big\lbrace \thinspace  d \enspace :\enspace  d_{\text{start}} \enspace \le\enspace  d \enspace \le\enspace  d_M - 2 \thinspace \big\rbrace 
 $$
 
-- $\mathcal{T}_M$: tập các ngày dùng để huấn luyện mô hình dự báo cho tháng $M$.
+- $\mathcal T_M$: tập các ngày dùng để huấn luyện mô hình dự báo cho tháng $M$.
 - $d_{\text{start}}$ = 01/07/2023: ngày bắt đầu dữ liệu huấn luyện.
 - $d_M$: ngày đầu tiên của tháng $M$; trừ 2 ngày vì độ trễ công bố số liệu.
 
@@ -582,14 +582,14 @@ Tập test không được dùng ở bất kỳ bước chọn lựa nào, nên 
 
 ### 12.1. Ba chỉ số sai số
 
-Với $n$ ngày, $y_i$ là thực tế, $\hat{y}_i$ là dự báo:
+Với $n$ ngày, $y_i$ là thực tế, $\hat y_i$ là dự báo (MAPE tính bằng %):
 
 $$
-\text{MAPE} = \frac{100\%}{n} \sum_{i=1}^{n} \frac{\lvert \hat{y}_i - y_i \rvert}{y_i}
+\text{MAPE} = \frac{100}{n} \sum_{i=1}^{n} \frac{\lvert \hat y_i - y_i \rvert}{y_i}
 \qquad
-\text{MAE} = \frac{1}{n} \sum_{i=1}^{n} \lvert \hat{y}_i - y_i \rvert
+\text{MAE} = \frac{1}{n} \sum_{i=1}^{n} \lvert \hat y_i - y_i \rvert
 \qquad
-\text{RMSE} = \sqrt{\frac{1}{n} \sum_{i=1}^{n} \left(\hat{y}_i - y_i\right)^2}
+\text{RMSE} = \sqrt{\frac{1}{n} \sum_{i=1}^{n} \left(\hat y_i - y_i\right)^2}
 $$
 
 | Chỉ số | Đơn vị | Ý nghĩa |
@@ -607,13 +607,13 @@ $$
 
 $$
 \begin{aligned}
-\text{MAPE} &= \frac{4{,}00\% + 4{,}42\%}{2} = 4{,}21\% \\[6pt]
-\text{MAE}  &= \frac{2\,303{,}2 + 1\,671{,}7}{2} = 1\,987{,}5 \text{ MW} \\[6pt]
-\text{RMSE} &= \sqrt{\frac{2\,303{,}2^2 + 1\,671{,}7^2}{2}} = \sqrt{4\,049\,656} = 2\,012{,}4 \text{ MW}
+\text{MAPE} &= \frac{4{,}00 + 4{,}42}{2} = 4{,}21 \cr 
+\text{MAE}  &= \frac{2\thinspace 303{,}2 + 1\thinspace 671{,}7}{2} = 1\thinspace 987{,}5 \text{ MW} \cr 
+\text{RMSE} &= \sqrt{\frac{2\thinspace 303{,}2^2 + 1\thinspace 671{,}7^2}{2}} = \sqrt{4\thinspace 049\thinspace 656} = 2\thinspace 012{,}4 \text{ MW}
 \end{aligned}
 $$
 
-Hai ngày này đều khó (kỷ lục nắng nóng, ngày lễ). Trên toàn bộ 329 ngày test, MAPE là **2,12%**.
+MAPE tính bằng %; MAE và RMSE tính bằng MW. Hai ngày này đều khó (kỷ lục nắng nóng, ngày lễ). Trên toàn bộ 329 ngày test, MAPE là **2,12%**.
 
 ### 12.2. Kiểm định Diebold–Mariano
 
@@ -622,18 +622,18 @@ Hai ngày này đều khó (kỷ lục nắng nóng, ngày lễ). Trên toàn b�
 **Bước 1.** Chênh lệch sai số từng ngày giữa mô hình (1) và baseline (2):
 
 $$
-d_i = \frac{\lvert \hat{y}^{(1)}_i - y_i \rvert}{y_i} \;-\; \frac{\lvert \hat{y}^{(2)}_i - y_i \rvert}{y_i}
+d_i = \frac{\lvert \hat y_i^{(1)} - y_i \rvert}{y_i} \enspace -\enspace  \frac{\lvert \hat y_i^{(2)} - y_i \rvert}{y_i}
 $$
 
 **Bước 2.** Thống kê DM, có tính đến tương quan giữa sai số các ngày liền nhau (dự báo trước $h = 2$ ngày):
 
 $$
-\text{DM} = \frac{\bar{d}}{\sqrt{\hat{\sigma}^2_{\text{LR}} / n}},
+\text{DM} = \frac{\bar{d}}{\sqrt{\hat \sigma^2_{\text{LR}} / n}},
 \qquad
-\hat{\sigma}^2_{\text{LR}} = \hat{\gamma}_0 + 2 \sum_{k=1}^{h-1} \left(1 - \frac{k}{h}\right) \hat{\gamma}_k
+\hat \sigma^2_{\text{LR}} = \hat \gamma_0 + 2 \sum_{k=1}^{h-1} \left(1 - \frac{k}{h}\right) \hat \gamma_k
 $$
 
-với $\hat{\gamma}_k$ là hiệp phương sai mẫu của $d_i$ ở độ trễ $k$.
+với $\hat \gamma_k$ là hiệp phương sai mẫu của $d_i$ ở độ trễ $k$.
 
 **Bước 3.** Hiệu chỉnh mẫu nhỏ (Harvey, Leybourne và Newbold, 1997), rồi so với phân phối $t$ với $n-1$ bậc tự do:
 
@@ -658,8 +658,8 @@ Mô hình phân vị dùng **hàm mất mát pinball** thay cho L1/L2:
 $$
 L_{\tau}(y, q) =
 \begin{cases}
-\tau \,(y - q), & y \ge q \\[4pt]
-(1 - \tau)\,(q - y), & y < q
+\tau \thinspace (y - q), & y \ge q \cr 
+(1 - \tau)\thinspace (q - y), & y < q
 \end{cases}
 $$
 
