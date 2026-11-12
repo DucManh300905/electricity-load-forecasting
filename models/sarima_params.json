@@ -1,0 +1,185 @@
+{
+  "order": [
+    2,
+    0,
+    1
+  ],
+  "seasonal_order": [
+    1,
+    1,
+    1,
+    7
+  ],
+  "valid_mape": 4.093312747371931,
+  "test_fit_log": [
+    {
+      "month": "2025-11-01",
+      "ok": "True",
+      "converged": "True",
+      "aic": "15159.05012097828",
+      "n_train": "850"
+    },
+    {
+      "month": "2025-12-01",
+      "ok": "True",
+      "converged": "True",
+      "aic": "15498.971426877433",
+      "n_train": "870"
+    },
+    {
+      "month": "2026-01-01",
+      "ok": "True",
+      "converged": "True",
+      "aic": "16021.183107054865",
+      "n_train": "901"
+    },
+    {
+      "month": "2026-02-01",
+      "ok": "True",
+      "converged": "True",
+      "aic": "16504.678463327782",
+      "n_train": "929"
+    },
+    {
+      "month": "2026-03-01",
+      "ok": "True",
+      "converged": "True",
+      "aic": "17016.345509466824",
+      "n_train": "956"
+    },
+    {
+      "month": "2026-04-01",
+      "ok": "True",
+      "converged": "True",
+      "aic": "17507.873654781324",
+      "n_train": "985"
+    },
+    {
+      "month": "2026-05-01",
+      "ok": "True",
+      "converged": "True",
+      "aic": "18033.799295684967",
+      "n_train": "1015"
+    },
+    {
+      "month": "2026-06-01",
+      "ok": "True",
+      "converged": "True",
+      "aic": "18632.30621293193",
+      "n_train": "1046"
+    },
+    {
+      "month": "2026-07-01",
+      "ok": "True",
+      "converged": "True",
+      "aic": "19168.944575144524",
+      "n_train": "1076"
+    },
+    {
+      "month": "2026-08-01",
+      "ok": "True",
+      "converged": "True",
+      "aic": "19706.967341742013",
+      "n_train": "1107"
+    },
+    {
+      "month": "2026-09-01",
+      "ok": "True",
+      "converged": "True",
+      "aic": "20253.299325198615",
+      "n_train": "1138"
+    },
+    {
+      "month": "2026-10-01",
+      "ok": "True",
+      "converged": "True",
+      "aic": "20833.698789341666",
+      "n_train": "1168"
+    },
+    {
+      "month": "2026-11-01",
+      "ok": "True",
+      "converged": "True",
+      "aic": "21365.146212973777",
+      "n_train": "1199"
+    }
+  ],
+  "final_fit": {
+    "through": "2026-11-10",
+    "params": {
+      "ar.L1": 0.745269,
+      "ar.L2": 0.094163,
+      "ma.L1": 0.223057,
+      "ar.S.L7": 0.054397,
+      "ma.S.L7": -0.864535,
+      "sigma2": 3293954.625654
+    },
+    "aic": 21556.669566245902,
+    "bic": 21587.31903108429,
+    "ljung_box": {
+      "7": {
+        "lb_stat": 10.849891,
+        "lb_pvalue": 0.145302
+      },
+      "14": {
+        "lb_stat": 16.668859,
+        "lb_pvalue": 0.274254
+      }
+    },
+    "bse": {
+      "ar.L1": 0.217542,
+      "ar.L2": 0.195257,
+      "ma.L1": 0.216384,
+      "ar.S.L7": 0.030238,
+      "ma.S.L7": 0.016067,
+      "sigma2": 66812.559706
+    }
+  },
+  "adf": [
+    {
+      "chuỗi": "y (gốc)",
+      "thành phần tất định": "hằng số",
+      "ADF": -3.037177,
+      "ADF p": 0.031565,
+      "KPSS": 4.144956,
+      "KPSS p": 0.01,
+      "n": 1187
+    },
+    {
+      "chuỗi": "y (gốc)",
+      "thành phần tất định": "hằng số + xu hướng",
+      "ADF": -6.333818,
+      "ADF p": 0.0,
+      "KPSS": 0.110907,
+      "KPSS p": 0.1,
+      "n": 1188
+    },
+    {
+      "chuỗi": "Δy (sai phân bậc 1)",
+      "thành phần tất định": "hằng số",
+      "ADF": -10.593167,
+      "ADF p": 0.0,
+      "KPSS": 0.09623,
+      "KPSS p": 0.1,
+      "n": 1176
+    },
+    {
+      "chuỗi": "Δ₇y (sai phân mùa)",
+      "thành phần tất định": "hằng số",
+      "ADF": -9.297912,
+      "ADF p": 0.0,
+      "KPSS": 0.01537,
+      "KPSS p": 0.1,
+      "n": 1165
+    },
+    {
+      "chuỗi": "Δ Δ₇y (cả hai)",
+      "thành phần tất định": "hằng số",
+      "ADF": -13.960406,
+      "ADF p": 0.0,
+      "KPSS": 0.006856,
+      "KPSS p": 0.1,
+      "n": 1145
+    }
+  ]
+}

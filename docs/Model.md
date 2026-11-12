@@ -299,3 +299,15 @@ Các vấn đề dưới đây **được phát hiện trên tập test**. Vì v
 - Mô hình đạt **MAPE khoảng 2,1%** cho cả Pmax và sản lượng trên một năm test độc lập. Kết quả này **tốt hơn baseline gấp khoảng 2,5 lần**, có ý nghĩa thống kê.
 - Hai thay đổi đóng góp nhiều nhất: (1) **baseline sạch** (bỏ ngày lễ khỏi tuần tham chiếu), (2) **đặc trưng lịch** cho lễ/Tết. Nhiệt độ dự báo giúp giảm sai số trong các đợt nắng nóng (Pmax: 6,6% → 2,7%).
 - **Sẵn sàng cho Giai đoạn 5** (vận hành hằng ngày) với dự báo điểm. Khoảng dự báo cần hiệu chỉnh trước khi đưa vào sử dụng.
+
+## 13. So sánh với SARIMA thuần
+
+Mô hình đối chứng kinh điển SARIMA(2,0,1)(1,1,1)₇, chỉ dùng lịch sử Pmax, được đánh giá theo cùng quy trình trên cùng 329 ngày test:
+
+| Pmax, MAPE | Tất cả | Ngày thường | Lễ/Tết | Nắng nóng |
+|---|---|---|---|---|
+| Baseline TB 4 tuần | 5,12% | 3,74% | 24,44% | 7,37% |
+| SARIMA thuần | 3,71% | 2,90% | 15,04% | 4,30% |
+| **Mô hình chính (Ensemble)** | **2,12%** | **1,86%** | **5,71%** | **2,71%** |
+
+Mô hình chính tốt hơn SARIMA có ý nghĩa thống kê (Diebold–Mariano, p < 0,0001). SARIMA chỉ hơn ở độ tin cậy của khoảng dự báo (phủ 86% so với 66%). Chi tiết: [`SARIMA.md`](SARIMA.md), [`Comparison.md`](Comparison.md), [`SARIMA_Algorithm.md`](SARIMA_Algorithm.md).

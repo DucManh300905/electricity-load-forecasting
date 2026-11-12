@@ -94,6 +94,16 @@ Quyết định đã chốt (theo khuyến nghị): (a) chỉ dùng nhiệt đ�
 - [ ] Còn mở: khoảng P10–P90 quá hẹp (độ phủ 64–66%), cần hiệu chỉnh bằng conformal prediction.
 - [ ] Còn mở: ngày nghỉ bù và lễ rơi vào cuối tuần bị dự báo thấp quá mức. Cần thêm đặc trưng, đánh giá lại trên dữ liệu mới.
 
+### Giai đoạn 4b: Mô hình đối chứng SARIMA hoàn thành (12/11/2026)
+Phạm vi đã chốt: **SARIMA thuần** (không biến ngoại sinh), **chỉ Pmax**, vai trò **mô hình so sánh**. Mã nguồn `sarima.py`, `notebooks/03_sarima.ipynb`; báo cáo `docs/SARIMA.md`, thuật toán `docs/SARIMA_Algorithm.md`, so sánh `docs/Comparison.md`.
+
+- [x] Kiểm định ADF và KPSS: chuỗi Pmax dừng quanh xu hướng → d = 0, sai phân mùa D = 1 (s = 7).
+- [x] Chọn bậc trên tập kiểm định trong 72 cấu hình: **SARIMA(2,0,1)(1,1,1)₇** (MAPE kiểm định 4,09%).
+- [x] Minh bạch: lần chạy 1 cố định d = 1 cho MA(1) ≈ −1 (sai phân thừa), phần dư còn tự tương quan; đã sửa bằng cách chọn d theo dữ liệu. Kết quả lần 1 lưu tại `data/sarima_run1/`.
+- [x] Kết quả test: **MAPE 3,71%**, tốt hơn baseline TB 4 tuần (p = 0,0007), ngang baseline sạch (p = 0,066), kém mô hình chính (2,12%, p < 0,0001).
+- [x] Phát hiện: SARIMA dự báo thấp khoảng 10% trong 1–2 ngày sau kỳ nghỉ ("dư âm"); khoảng dự báo 80% đáng tin cậy (phủ 86%).
+- [ ] Hướng mở (chưa làm): SARIMAX với biến lịch và nhiệt độ.
+
 ### Giai đoạn 5: Vận hành hằng ngày
 - [ ] Lịch chạy khoảng 11:30 mỗi ngày: `crawler.py` → `parser.py` → cập nhật thời tiết → `predict.py`.
 - [ ] Lưu dự báo và so sánh với số liệu thực tế khi có.
